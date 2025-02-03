@@ -71,6 +71,11 @@ class DockerfileGenerator:
             f.write(rendered_dockerfile)
 
 def main():
+    # check first if docker is installed
+    if os.system('docker --version') != 0:
+        print("Error: Docker is not installed. Please install Docker first!")
+        return
+
     generator = DockerfileGenerator()
     parser = argparse.ArgumentParser(description='Dockerfile Generator')
     subparsers = parser.add_subparsers(dest='command', help='Command to execute')
@@ -94,13 +99,14 @@ def main():
         print("Selected Base Template:", args.base)
         print("Selected ROS Template:", args.ros)
         print("Selected Entrypoint Template:", args.entrypoint)
-        # Generation logic here
         generator.generate_dockerfile(args.base, args.ros, args.entrypoint, 'Dockerfile')
+        print("Dockerfile generated successfully")
 
     elif args.command == 'build':
         dockerfile_path = 'Dockerfile'
         if os.path.exists(dockerfile_path):
             os.system(f'docker build -t {args.image} .')
+            print("Docker image built successfully")
         else:
             print("Error: Dockerfile not found. Please generate the Dockerfile first!")
 
