@@ -23,3 +23,5 @@ Build different types of Docker images.
     ```bash
     docker run -it --rm --hostname ros-desktop -v ./ros_ws:/home/ros/ros_ws ros2
     ```
+    This wil create a container with the name `ros-desktop` and mount the `ros_ws` directory.
+    And will remove the container after it is stopped. To keep the container, remove the `--rm` option.
