@@ -105,7 +105,7 @@ def main():
     elif args.command == 'build':
         dockerfile_path = 'Dockerfile'
         if os.path.exists(dockerfile_path):
-            os.system(f'docker build -t {args.image} .')
+            os.system(f'docker build -t {args.tag} .')
             print("Docker image built successfully")
         else:
             print("Error: Dockerfile not found. Please generate the Dockerfile first!")
