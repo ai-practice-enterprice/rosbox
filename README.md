@@ -31,10 +31,10 @@ Build different types of Docker images.
 
 #### Run Image
 - Create a directory for the ROS workspace `ros_ws`.
-- Create the container from the image.
+- Create the container from the image. Do not forget to replace `<path_to_ros_ws>` with the path to the `ros_ws` directory.
 
     ```bash
-    docker run -it --rm --hostname ros-desktop -v ./ros_ws:/home/ros/ros_ws ros2
+    docker run -it --rm --hostname ros-desktop -v <path_to_ros_ws>:/home/ros/ros_ws ros2
     ```
     This wil create a container with the name `ros-desktop` and mount the `ros_ws` directory.
     And will remove the container after it is stopped. To keep the container, remove the `--rm` option.
