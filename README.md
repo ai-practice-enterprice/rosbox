@@ -14,6 +14,14 @@ Build different types of Docker images.
     pip install -r requirements.txt
     ```
 ## Usage
+
+### With interactive menu
+- Run the script with the interactive menu.
+
+    ```bash
+    python build_image.py ibuilder
+    ```
+
 ### Manual
 #### Create Dockerfile
 - Create a Dockerfile from selected options (all options in `python build_image.py gen -h`).
