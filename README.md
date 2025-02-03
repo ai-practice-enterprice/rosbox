@@ -26,7 +26,7 @@ Build different types of Docker images.
 - Build the image from the Dockerfile.
 
     ```bash
-    python build_image.py build --image ros2
+    python build_image.py build --tag ros2
     ```
 
 #### Run Image
