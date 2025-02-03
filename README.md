@@ -2,6 +2,9 @@
 Build different types of Docker images.
 
 ## Installation of script
+- Install docker.
+    - windows: [Docker Desktop](https://www.docker.com/get-started/)
+    - linux: [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)
 - Clone the repository or download the zip file.
     ```bash
     git clone https://github.com/ai-practice-enterprice/image_builder
