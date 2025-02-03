@@ -1,12 +1,18 @@
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment
 import os
 import argparse
+from pick import pick
 
 # defines
 base_templates_path = 'base_templates'
 ros_templates_path = 'ros_templates'
 entrypoints_templates_path = 'entrypoints_templates'
+default_base_template = 'universal'
+default_ros_template = 'ros-desktop'
+default_entrypoint_template = 'it'
+default_image_tag = 'ros2'
 
+# Class to generate Dockerfile
 class DockerfileGenerator:
     def __init__(self):
         self.base_templates = self.load_base_templates_options()
@@ -70,6 +76,73 @@ class DockerfileGenerator:
         with open(output_file, 'w') as f:
             f.write(rendered_dockerfile)
 
+# class to build the image
+class ImageBuilder:
+    def __init__(self, dockerfile_path):
+        self.dockerfile_path = dockerfile_path
+
+    def build_image(self, tag):
+        if os.path.exists(self.dockerfile_path):
+            try:
+                return_code = os.system(f'docker build -t {tag} -f {self.dockerfile_path} .')
+                if return_code == 0:
+                    print("Docker image built successfully")
+                else:
+                    raise Exception(f"Docker build failed with return code {return_code}")
+            except Exception as e:
+                print(f"Error building Docker image: {str(e)}")
+                raise
+        else:
+            print("Error: Dockerfile not found. Please generate the Dockerfile first!")
+
+# class to build the image using an interactive interface
+class InteractiveBuilder:
+    def __init__(self):
+        self.dockerfile_path = 'Dockerfile'
+        self.generator = DockerfileGenerator()
+        self.image_builder = ImageBuilder(self.dockerfile_path)
+        self.selected_base = default_base_template
+        self.selected_ros = default_ros_template
+        self.selected_entrypoint = default_entrypoint_template
+
+    def select_base_template(self):
+        options = list(self.generator.base_templates.keys())
+        title = "Choose a base template:"
+        self.selected_base, _ = pick(options, title)
+
+    def select_ros_template(self):
+        options = list(self.generator.ros_templates.keys())
+        title = "Choose a ROS template:"
+        self.selected_ros, _ = pick(options, title)
+
+    def select_entrypoint_template(self):
+        options = list(self.generator.entrypoints_templates.keys())
+        title = "Choose an entrypoint template:"
+        self.selected_entrypoint, _ = pick(options, title)
+
+    def generate_dockerfile(self):
+        options = ["default", "custom"]
+        title = "Choose a generation method:"
+        selected_option, _ = pick(options, title)
+        if selected_option == "custom":
+            self.select_base_template()
+            self.select_ros_template()
+            self.select_entrypoint_template()
+        self.generator.generate_dockerfile(self.selected_base, self.selected_ros, self.selected_entrypoint, self.dockerfile_path)
+        print("Dockerfile generated successfully")
+
+    def build_image(self):
+        self.image_builder.build_image(default_image_tag)
+        print("Docker image built done")
+
+    def run(self):
+        self.generate_dockerfile()
+        option = ["yes", "no"]
+        title = "Do you want to build the image?"
+        selected_option, _ = pick(option, title)
+        if selected_option == "yes":
+            self.build_image()
+
 def main():
     # check first if docker is installed
     if os.system('docker --version') != 0:
@@ -82,15 +155,16 @@ def main():
 
     # Create parser for "gen" command
     gen_parser = subparsers.add_parser('gen', help='Generate Dockerfile')
-    gen_parser.add_argument('--base', help=f'Base image to use. Options: {list(generator.base_templates.keys())}')
-    gen_parser.add_argument('--ros', help=f'ROS template to use. Options: {list(generator.ros_templates.keys())}')
-    gen_parser.add_argument('--entrypoint', help=f'Entrypoint template to use. Options: {list(generator.entrypoints_templates.keys())}')
-    # Add more arguments as needed for gen command
+    gen_parser.add_argument('--base', help=f'Base image to use. Options: {list(generator.base_templates.keys())}', required=True)
+    gen_parser.add_argument('--ros', help=f'ROS template to use. Options: {list(generator.ros_templates.keys())}', required=True)
+    gen_parser.add_argument('--entrypoint', help=f'Entrypoint template to use. Options: {list(generator.entrypoints_templates.keys())}', required=True)
 
     # Create parser for "build" command
     build_parser = subparsers.add_parser('build', help='Build Docker image')
-    build_parser.add_argument('--tag', help='Tag for the image')
-    # Add more arguments as needed for build command
+    build_parser.add_argument('--tag', help='Tag for the image', default=default_image_tag)
+    build_parser.add_argument('--dockerfile', help='Path to the Dockerfile', default='Dockerfile')
+
+    subparsers.add_parser('ibuilder', help='Build docker image using a interactive interface to select the templates')
 
     args = parser.parse_args()
 
@@ -104,11 +178,13 @@ def main():
 
     elif args.command == 'build':
         dockerfile_path = 'Dockerfile'
-        if os.path.exists(dockerfile_path):
-            os.system(f'docker build -t {args.tag} .')
-            print("Docker image built successfully")
-        else:
-            print("Error: Dockerfile not found. Please generate the Dockerfile first!")
+        builder = ImageBuilder(dockerfile_path)
+        builder.build_image(args.tag)
+
+    elif args.command == 'ibuilder':
+        IB = InteractiveBuilder()
+        IB.run()
+
 
 if __name__ == '__main__':
     main()
