@@ -19,7 +19,7 @@ Build different types of Docker images.
 ### With interactive menu
 - Run the script with the interactive menu.
     ```bash
-    python build_image.py ibuilder
+    python imageBuilder.py ibuilder
     ```
 - Run image
   - Create a directory for the ROS workspace `ros_ws`.
@@ -34,17 +34,17 @@ Build different types of Docker images.
 
 ### Manual
 - Create Dockerfile
-  - Create a Dockerfile from selected options (all options in `python build_image.py gen -h`).
+  - Create a Dockerfile from selected options (all options in `python imageBuilder.py gen -h`).
 
     ```bash
-    python build_image.py gen --base universal --ros ros-desktop --entrypoint it
+    python imageBuilder.py gen --base universal --ros ros-desktop --entrypoint it
     ```
 
 - Build image
   - Build the image from the Dockerfile.
 
     ```bash
-    python build_image.py build --tag ros2
+    python imageBuilder.py build --tag ros2
     ```
 
 - Run image
