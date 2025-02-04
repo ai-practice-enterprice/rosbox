@@ -1,4 +1,4 @@
-# Image Builder
+# RosBox
 Build different types of Docker images.
 
 ## Installation of script
