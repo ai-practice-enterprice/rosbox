@@ -4,12 +4,19 @@ It streamlines the process of deploying and managing ROS environments by encapsu
 Additionally, rosbox can build container images based on templates, ensuring consistent and reproducible setups for the project.
 
 ## Install
-1. Go to the root of project.
-2. run:
-  ```bash
-  pip install .
-  ```
-3. Now you can use robox anywhere in the command line.
+1. Install docker.
+   - windows: [Docker Desktop](https://www.docker.com/get-started/)
+   - linux: [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)
+2. Clone the repository or download the zip file.
+   ```bash
+   git clone https://github.com/ai-practice-enterprice/image_builder
+   ```
+3. Go to the root of project.
+4. run:
+    ```bash
+    pip install .
+    ```
+5. Now you can use robox anywhere in the command line.
 
 ## Basic Example
 
