@@ -15,7 +15,7 @@ class ContainerManager:
         self.client = docker.from_env()
         self.interactive_builder = InteractiveBuilder(self.dockerfile_path)
 
-    def create_container(self, image_tag, container_name, ros_ws_path=None, auto_start=True):
+    def create_container(self, image_tag, container_name, ros_ws_path=None, auto_start=True, ssh_dir=False):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
             # create mounts
@@ -27,12 +27,22 @@ class ContainerManager:
                     type="bind",
                     read_only=False
                 ))
+            if ssh_dir:
+                ssh_path = os.path.expanduser("~/.ssh")
+                if os.path.exists(ssh_path):
+                    mounts.append(Mount(
+                        target="/home/ubuntu/.ssh",
+                        source=ssh_path,
+                        type="bind",
+                        read_only=True  # Read-only for security
+                    ))
             # create container
             container = self.client.containers.create(
                 image_tag, name=container_name,
                 hostname=container_name.replace('_' + self.rosbox_suffix, ''),
                 detach=True,
-                mounts=mounts)
+                mounts=mounts,
+                labels={"type": "rosbox"})
             print(f"Container {container_name.replace('_' + self.rosbox_suffix, '')} created successfully")
             # start container
             if auto_start:
@@ -55,7 +65,10 @@ class ContainerManager:
     def enter_container(self, container_name):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
-            _ = self.client.containers.get(container_name) # check if container exists
+            container = self.client.containers.get(container_name)
+            if container.status != 'running':
+                container.start()
+                print(f"Container {container_name.replace('_' + self.rosbox_suffix, '')} started before entering")
             command = f"docker exec -it {container_name} bash"
             subprocess.run(command, shell=True)
         except Exception as e:
@@ -73,7 +86,7 @@ class ContainerManager:
             raise
 
     def list_containers(self):
-        containers = [c for c in self.client.containers.list() if self.rosbox_suffix in c.name]
+        containers = [c for c in self.client.containers.list(all=True, filters={"label": "type=rosbox"})]
         print(f"{'ID':<12} | {'NAME':<20} | {'STATUS':<20} | {'IMAGE':<20}")
         print("-" * 72)
         for container in containers:
@@ -115,29 +128,31 @@ def main():
 
     # Create parser for "create" command
     create_parser = subparsers.add_parser('create', help='create rosbox')
-    create_parser.add_argument('--image', help='image name for the rosbox', required=True)
-    create_parser.add_argument('--name', help='name of the rosbox', required=True)
+    create_parser.add_argument('image', help='image name for the rosbox')
+    create_parser.add_argument('name', help='name of the rosbox')
     create_parser.add_argument('--ros_ws', help='path to the ROS workspace', default=None)
-    create_parser.add_argument('--no_start', help='disable container autostart wen created', action="False")
+    create_parser.add_argument('--no_start', help='disable container autostart wen created', action='store_true')
+    create_parser.add_argument('--ssh_keys', help='mount the ssh dir from host to container', action='store_true')
+    # TODO add nvidia suport
 
     # Create parser for "start" command
     start_parser = subparsers.add_parser('start', help='start rosbox')
-    start_parser.add_argument('--name', help='name of the rosbox', required=True)
+    start_parser.add_argument('name', help='name of the rosbox')
 
     # Create parser for "enter" command
     enter_parser = subparsers.add_parser('enter', help='start rosbox')
-    enter_parser.add_argument('--name', help='name of the rosbox', required=True)
+    enter_parser.add_argument('name', help='name of the rosbox')
 
     # Create parser for "stop" command
     stop_parser = subparsers.add_parser('stop', help='start rosbox')
-    stop_parser.add_argument('--name', help='name of the rosbox', required=True)
+    stop_parser.add_argument('name', help='name of the rosbox')
 
     # Create parser for "list" command
     subparsers.add_parser('list', help='start rosbox')
 
     # Create parser for "remove" command
     remove_parser = subparsers.add_parser('remove', help='start rosbox')
-    remove_parser.add_argument('--name', help='name of the rosbox', required=True)
+    remove_parser.add_argument('name', help='name of the rosbox')
 
     # Create parser for "build" command
     build_parser = subparsers.add_parser('build', help='start rosbox')
@@ -147,12 +162,12 @@ def main():
 
     # Create parser for "ibuilder" command
     ibuilder_parser = subparsers.add_parser('ibuilder', help='Build docker image using a interactive interface to select the templates')
-    ibuilder_parser.add_argument('--name', help='name of the image')
+    ibuilder_parser.add_argument('name', help='name of the image')
 
     args = parser.parse_args()
 
     if args.command == 'create':
-        manager.create_container(args.image, args.name, args.ros_ws, not args.no_start == "False")
+        manager.create_container(args.image, args.name, args.ros_ws, not args.no_start, args.ssh_keys)
     elif args.command == 'start':
         manager.start_container(args.name)
     elif args.command == 'enter':
