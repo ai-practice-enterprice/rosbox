@@ -4,9 +4,10 @@ import argparse
 from pick import pick
 
 # defines
-base_templates_path = 'base_templates'
-ros_templates_path = 'ros_templates'
-entrypoints_templates_path = 'entrypoints_templates'
+current_dir = os.path.dirname(__file__)
+base_templates_path = os.path.join(current_dir, 'base_templates')
+ros_templates_path = os.path.join(current_dir, 'ros_templates')
+entrypoints_templates_path = os.path.join(current_dir, 'entrypoints_templates')
 default_base_template = 'universal'
 default_ros_template = 'ros-desktop'
 default_entrypoint_template = 'it'

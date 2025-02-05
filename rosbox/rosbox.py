@@ -1,9 +1,22 @@
-from imageBuilder import InteractiveBuilder
+from .imageBuilder import InteractiveBuilder
 import docker
 from docker.types import Mount
 import subprocess
 import argparse
 import os
+
+def check_docker():
+    try:
+        result = subprocess.run(['docker', '--version'],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                encoding='utf-8')
+        if result.returncode != 0:
+            print("Error: Docker is not installed. Please install Docker first!")
+            exit(1)
+    except Exception as e:
+        print("Error running docker --version:", e)
+        exit(1)
 
 # class for creating, running, entering and stopping the containers
 class ContainerManager:
@@ -117,9 +130,7 @@ class ContainerManager:
 
 def main():
     # check first if docker is installed
-    if os.system('docker --version') != 0:
-        print("Error: Docker is not installed. Please install Docker first!")
-        return
+    check_docker()
 
     manager = ContainerManager()
 
