@@ -4,9 +4,10 @@ import argparse
 from pick import pick
 
 # defines
-base_templates_path = 'base_templates'
-ros_templates_path = 'ros_templates'
-entrypoints_templates_path = 'entrypoints_templates'
+current_dir = os.path.dirname(__file__)
+base_templates_path = os.path.join(current_dir, 'base_templates')
+ros_templates_path = os.path.join(current_dir, 'ros_templates')
+entrypoints_templates_path = os.path.join(current_dir, 'entrypoints_templates')
 default_base_template = 'universal'
 default_ros_template = 'ros-desktop'
 default_entrypoint_template = 'it'
@@ -97,8 +98,8 @@ class ImageBuilder:
 
 # class to build the image using an interactive interface
 class InteractiveBuilder:
-    def __init__(self):
-        self.dockerfile_path = 'Dockerfile'
+    def __init__(self, dockerfile_path):
+        self.dockerfile_path = dockerfile_path
         self.generator = DockerfileGenerator()
         self.image_builder = ImageBuilder(self.dockerfile_path)
         self.selected_base = default_base_template
@@ -120,19 +121,36 @@ class InteractiveBuilder:
         title = "Choose an entrypoint template:"
         self.selected_entrypoint, _ = pick(options, title)
 
-    def generate_dockerfile(self):
+    def generate_dockerfile(self, base = None, ros = None, entryPoint = None):
         options = ["default", "custom"]
         title = "Choose a generation method:"
         selected_option, _ = pick(options, title)
         if selected_option == "custom":
-            self.select_base_template()
-            self.select_ros_template()
-            self.select_entrypoint_template()
+            if base == None:
+                self.select_base_template()
+            else:
+                self.selected_base = base
+            if ros == None:
+                self.select_ros_template()
+            else:
+                self.selected_ros = ros
+            if entryPoint == None:
+                self.select_entrypoint_template()
+            else:
+                self.selected_entrypoint = entryPoint
+        else:
+            if base != None:
+                self.selected_base = base
+            if ros != None:
+                self.selected_ros = ros
+            if entryPoint != None:
+                self.selected_entrypoint = entryPoint
+
         self.generator.generate_dockerfile(self.selected_base, self.selected_ros, self.selected_entrypoint, self.dockerfile_path)
         print("Dockerfile generated successfully")
 
-    def build_image(self):
-        self.image_builder.build_image(default_image_tag)
+    def build_image(self, tag = None):
+        self.image_builder.build_image(tag if tag is not None else default_image_tag)
         print("Docker image built done")
 
     def run(self):
@@ -150,7 +168,7 @@ def main():
         return
 
     generator = DockerfileGenerator()
-    parser = argparse.ArgumentParser(description='Dockerfile Generator')
+    parser = argparse.ArgumentParser(description='Docker image builder')
     subparsers = parser.add_subparsers(dest='command', help='Command to execute')
 
     # Create parser for "gen" command
@@ -182,7 +200,8 @@ def main():
         builder.build_image(args.tag)
 
     elif args.command == 'ibuilder':
-        IB = InteractiveBuilder()
+        dockerfile_path = 'Dockerfile'
+        IB = InteractiveBuilder(dockerfile_path)
         IB.run()
 
 
