@@ -1,5 +1,6 @@
 from imageBuilder import InteractiveBuilder
 import docker
+from docker.types import Mount
 import subprocess
 import argparse
 import os
@@ -14,12 +15,29 @@ class ContainerManager:
         self.client = docker.from_env()
         self.interactive_builder = InteractiveBuilder(self.dockerfile_path)
 
-    def create_container(self, image_tag, container_name):
+    def create_container(self, image_tag, container_name, ros_ws_path=None, auto_start=True):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
-            container = self.client.containers.create(image_tag, name=container_name, hostname=container_name.replace('_' + self.rosbox_suffix, ''), detach=True)
-            container.start()
+            # create mounts
+            mounts = []
+            if ros_ws_path:
+                mounts.append(Mount(
+                    target="/home/ubuntu/ros_ws",
+                    source=os.path.abspath(ros_ws_path),
+                    type="bind",
+                    read_only=False
+                ))
+            # create container
+            container = self.client.containers.create(
+                image_tag, name=container_name,
+                hostname=container_name.replace('_' + self.rosbox_suffix, ''),
+                detach=True,
+                mounts=mounts)
             print(f"Container {container_name.replace('_' + self.rosbox_suffix, '')} created successfully")
+            # start container
+            if auto_start:
+                container.start()
+                print(f"Container {container_name.replace('_' + self.rosbox_suffix, '')} started successfully")
         except Exception as e:
             print(f"Error creating container: {str(e)}")
             raise
@@ -99,6 +117,8 @@ def main():
     create_parser = subparsers.add_parser('create', help='create rosbox')
     create_parser.add_argument('--image', help='image name for the rosbox', required=True)
     create_parser.add_argument('--name', help='name of the rosbox', required=True)
+    create_parser.add_argument('--ros_ws', help='path to the ROS workspace', default=None)
+    create_parser.add_argument('--no_start', help='disable container autostart wen created', action="False")
 
     # Create parser for "start" command
     start_parser = subparsers.add_parser('start', help='start rosbox')
@@ -132,7 +152,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == 'create':
-        manager.create_container(args.image, args.name)
+        manager.create_container(args.image, args.name, args.ros_ws, not args.no_start == "False")
     elif args.command == 'start':
         manager.start_container(args.name)
     elif args.command == 'enter':

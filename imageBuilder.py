@@ -1,4 +1,3 @@
-from importlib.metadata import entry_points
 from jinja2 import Environment
 import os
 import argparse
@@ -137,6 +136,13 @@ class InteractiveBuilder:
             if entryPoint == None:
                 self.select_entrypoint_template()
             else:
+                self.selected_entrypoint = entryPoint
+        else:
+            if base != None:
+                self.selected_base = base
+            if ros != None:
+                self.selected_ros = ros
+            if entryPoint != None:
                 self.selected_entrypoint = entryPoint
 
         self.generator.generate_dockerfile(self.selected_base, self.selected_ros, self.selected_entrypoint, self.dockerfile_path)

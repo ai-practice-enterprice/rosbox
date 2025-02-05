@@ -1,12 +1,11 @@
 RUN apt-get update && apt-get install -y sudo && \
-    useradd -m -s /bin/bash ros && \
-    echo "ros ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-USER ros
-RUN mkdir /home/ros/ros_ws
-VOLUME [ "/home/ros/ros_ws" ]
-WORKDIR /home/ros/ros_ws
+USER ubuntu
+RUN mkdir /home/ubuntu/ros_ws
+VOLUME [ "/home/ubuntu/ros_ws" ]
+WORKDIR /home/ubuntu/ros_ws
 
-RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /home/ros/.bashrc
+RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /home/ubuntu/.bashrc
 
 ENTRYPOINT ["sleep", "infinity"]
