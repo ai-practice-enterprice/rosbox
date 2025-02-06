@@ -28,7 +28,8 @@ class ContainerManager:
         self.client = docker.from_env()
         self.interactive_builder = InteractiveBuilder(self.dockerfile_path)
 
-    def create_container(self, image_tag, container_name, ros_ws_path=None, auto_start=True, ssh_dir=False):
+    # TODO add nvidia suport
+    def create_container(self, image_tag, container_name, ros_ws_path=None, auto_start=True, ssh_dir=False, host_net=True, gpu=False):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
             # create mounts
@@ -55,7 +56,8 @@ class ContainerManager:
                 hostname=container_name.replace('_' + self.rosbox_suffix, ''),
                 detach=True,
                 mounts=mounts,
-                labels={"type": "rosbox"})
+                labels={"type": "rosbox"},
+                network_mode="host" if host_net else "bridge")
             print(f"Container {container_name.replace('_' + self.rosbox_suffix, '')} created successfully")
             # start container
             if auto_start:
@@ -144,7 +146,9 @@ def main():
     create_parser.add_argument('--ros_ws', help='path to the ROS workspace', default=None)
     create_parser.add_argument('--no_start', help='disable container autostart wen created', action='store_true')
     create_parser.add_argument('--ssh_keys', help='mount the ssh dir from host to container', action='store_true')
+    create_parser.add_argument('--no_host_net', help='do not use the host network', action='store_true')
     # TODO add nvidia suport
+    # create_parser.add_argument('--gpu', help='use nvidia runtime', action='store_true')
 
     # Create parser for "start" command
     start_parser = subparsers.add_parser('start', help='start rosbox')
@@ -178,7 +182,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == 'create':
-        manager.create_container(args.image, args.name, args.ros_ws, not args.no_start, args.ssh_keys)
+        manager.create_container(args.image, args.name, args.ros_ws, not args.no_start, args.ssh_keys, not args.no_host_net)
     elif args.command == 'start':
         manager.start_container(args.name)
     elif args.command == 'enter':
