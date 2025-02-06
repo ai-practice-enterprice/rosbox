@@ -26,6 +26,9 @@ This is a basic example demonstrating rosbox commands:
    ```bash
    rosbox ibuilder ros2
    ```
+    - Select generation method: custom
+    - Select the base template: universal
+    - Select the ROS template: ros-desktop
 2. rosbox create:
    ```bash
    rosbox create ros2 test --ros_ws <path_to_ROS_workspace> --ssh_keys
