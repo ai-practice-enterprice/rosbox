@@ -29,7 +29,7 @@ class ContainerManager:
         self.interactive_builder = InteractiveBuilder(self.dockerfile_path)
 
     # TODO add nvidia suport
-    def create_container(self, image_tag, container_name, ros_ws_path=None, auto_start=True, ssh_dir=False, host_net=True, nvidia=False):
+    def create_container(self, image_tag, container_name, ros_ws_path=None, auto_start=True, ssh_dir=False, host_net=True, gpu=False):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
             # create mounts
@@ -148,6 +148,7 @@ def main():
     create_parser.add_argument('--ssh_keys', help='mount the ssh dir from host to container', action='store_true')
     create_parser.add_argument('--no_host_net', help='do not use the host network', action='store_true')
     # TODO add nvidia suport
+    # create_parser.add_argument('--gpu', help='use nvidia runtime', action='store_true')
 
     # Create parser for "start" command
     start_parser = subparsers.add_parser('start', help='start rosbox')
