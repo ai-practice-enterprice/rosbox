@@ -28,7 +28,7 @@ This is a basic example demonstrating rosbox commands:
    ```
 2. rosbox create:
    ```bash
-   rosbox create ros2 test --ros_ws ../ros_ws --ssh_keys
+   rosbox create ros2 test --ros_ws <path_to_ROS_workspace> --ssh_keys
    ```
 3. rosbox enter:
    ```bash
@@ -46,7 +46,7 @@ This is a basic example demonstrating rosbox commands:
 ## Usage
 - Create a new rosbox container:
   ```bash
-  rosbox create <image> <name> [--ros_ws <path_to_ROS_workspace>] [--no_start] [--ssh_keys]
+  rosbox create <image> <name> [--ros_ws <path_to_ROS_workspace>] [--no_start] [--ssh_keys] [--no_host_net]
   ```
   - `image`: Specifies the Docker image name to be used.
   - `name`: Defines the name of the rosbox.
@@ -54,7 +54,11 @@ This is a basic example demonstrating rosbox commands:
   - `--no_start`: (Optional) Prevents the container from starting immediately after creation.
   - `--ssh_keys`: (Optional) Mounts the host’s SSH directory into the container.
     - Use this option to enable the container to access and use your SSH keys, ensuring secure authentication and remote repository access. By replicating your SSH configuration inside the container, it allows seamless Git operations and remote logins without requiring additional manual key transfers.
+  - `--no_host_net`: (Optional) Do not use the host network.
+    - When enabled, this flag tells rosbox to configure the Docker container with its own isolated network stack instead of sharing the host's network.
+    - This setup enhances security and helps prevent potential network conflicts between the container and the host system.
   - `-h`: Displays help information for this command, including a summary of available options.
+  - `--gpu`: (Optional) Enables NVIDIA GPU passthrough to the container. (not implemented yet!!!!)
 
 - Start an existing rosbox:
 ```bash
