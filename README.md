@@ -64,9 +64,9 @@ This is a basic example demonstrating rosbox commands:
   - `--gpu`: (Optional) Enables NVIDIA GPU passthrough to the container. (not implemented yet!!!!)
 
 - Start an existing rosbox:
-```bash
-  rosbox start <name>
-```
+   ```bash
+     rosbox start <name>
+   ```
   - `name`: The name of the rosbox container to start.
   - `-h`: Displays help information for this command, including a summary of available options.
 
@@ -97,20 +97,20 @@ This is a basic example demonstrating rosbox commands:
   - `--no_build`: (Optional) Skip the image building process. And generate the Dockerfile only.
   - `-h`: Displays help information for this command.
 
-• Build a new Docker image using templates:
-  ```bash
-  rosbox build --base <BASE_TEMPLATE> --ros <ROS_TEMPLATE> --name <IMAGE_NAME>
-  ```
+- Build a new Docker image using templates:
+   ```bash
+   rosbox build --base <BASE_TEMPLATE> --ros <ROS_TEMPLATE> --name <IMAGE_NAME>
+   ```
   - `--base`: (Required) Base image to use. Options are provided by available base templates.
   - `--ros`: (Required) ROS template to use. Choose from the provided ROS templates.
   - `--name`: (Required) Name for the created image.
   - `--no_build`: (Optional) Skip the image building process. And generate the Dockerfile only.
   - `-h`: Displays help information for this command, including a summary of available options.
 
-• Launch the interactive builder for Docker images:
-  ```bash
-  rosbox ibuilder <name>
-  ```
+- Launch the interactive builder for Docker images:
+   ```bash
+   rosbox ibuilder <name>
+   ```
   - `name`: The name assigned to the image being built.
   - `-h`: Displays help information for this command.
 
