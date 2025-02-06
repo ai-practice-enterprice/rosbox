@@ -122,13 +122,15 @@ class ContainerManager:
             print(f"Error removing container: {str(e)}")
             raise
 
-    def build_image(self, base_template, ros_template, image_name):
+    def build_image(self, base_template, ros_template, image_name, no_build):
         self.interactive_builder.generate_dockerfile(base_template, ros_template, 'rosbox')
-        self.interactive_builder.build_image(image_name)
+        if not no_build:
+            self.interactive_builder.build_image(image_name)
 
-    def build_image_it(self, image_name):
+    def build_image_it(self, image_name, no_build):
         self.interactive_builder.generate_dockerfile(entryPoint = 'rosbox')
-        self.interactive_builder.build_image(image_name)
+        if not no_build:
+            self.interactive_builder.build_image(image_name)
 
 def main():
     # check first if docker is installed
@@ -174,10 +176,12 @@ def main():
     build_parser.add_argument('--base', help=f'Base image to use. Options: {list(manager.interactive_builder.generator.base_templates.keys())}', required=True)
     build_parser.add_argument('--ros', help=f'ROS template to use. Options: {list(manager.interactive_builder.generator.ros_templates.keys())}', required=True)
     build_parser.add_argument('--name', help='name of the image', required=True)
+    build_parser.add_argument('--no_build', help='do not build the image but only generate the Dockerfile', action='store_true')
 
     # Create parser for "ibuilder" command
     ibuilder_parser = subparsers.add_parser('ibuilder', help='Build docker image using a interactive interface to select the templates')
     ibuilder_parser.add_argument('name', help='name of the image')
+    ibuilder_parser.add_argument('--no_build', help='do not build the image but only generate the Dockerfile', action='store_true')
 
     args = parser.parse_args()
 
@@ -194,9 +198,9 @@ def main():
     elif args.command == 'remove':
         manager.remove_container(args.name)
     elif args.command == 'build':
-        manager.build_image(args.base, args.ros, args.name)
+        manager.build_image(args.base, args.ros, args.name, args.no_build)
     elif args.command == 'ibuilder':
-        manager.build_image_it(args.name)
+        manager.build_image_it(args.name, args.no_build)
 
 if __name__ == "__main__":
     main()

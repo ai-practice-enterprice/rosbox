@@ -1,5 +1,4 @@
-RUN apt-get update && apt-get install -y sudo && \
-    echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+RUN echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 USER ubuntu
 RUN mkdir /home/ubuntu/ros_ws
