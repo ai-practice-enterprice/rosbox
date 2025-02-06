@@ -113,3 +113,31 @@ This is a basic example demonstrating rosbox commands:
   ```
   - `name`: The name assigned to the image being built.
   - `-h`: Displays help information for this command.
+
+## image templates
+### default
+- base: ubuntu:20.04
+- ros: ros-desktop
+
+### base templates
+- universal: ubuntu:20.04
+- toolbox: for distrobox not for rosbox
+- (in progress) nvidia: nvidia/cuda:11.4.1-cudnn8-devel-ubuntu20.04
+
+### ros templates
+- core: ros-core
+> minimal Installation with essential ROS 2 communication packages (publish/subscribe,services,etc...) \
+> does **not** include visualisation tools or other add-ons
+- base: ros-base (extends the `ROS Core`)
+> adds some additional CLI tools and basic packages \
+> such as the **robot_state_publisher** or **URDF** which will be required when combining `ROS` and `Gazebo`
+- desktop: ros-desktop (extends `ROS Base`)
+> adds visualisation tools such as **Rviz** (to vizualize URDF files)
+- desktop-full: ros-desktop-full (extends `Desktop`)
+> adds the `Perception` and `Simulation` packages and `Gazebo` simulation demos
+- perception: ros-perception (extends `ROS Base`)
+> adds other packages like **vision_opencv** or **laser_geometry** \
+> (libraries for working with sensors,computer vision,etc...)
+- simulation: ros-simulation (extends `ROS Base`)
+> adds other packages like **ros_gz_bridge** or **ros_gz_sim** \
+> which are `Gazebo` plugins for `ROS`
