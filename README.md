@@ -94,6 +94,7 @@ This is a basic example demonstrating rosbox commands:
   rosbox remove <name>
   ```
   - `name`: The name of the rosbox container to remove.
+  - `--no_build`: (Optional) Skip the image building process. And generate the Dockerfile only.
   - `-h`: Displays help information for this command.
 
 • Build a new Docker image using templates:
@@ -103,6 +104,7 @@ This is a basic example demonstrating rosbox commands:
   - `--base`: (Required) Base image to use. Options are provided by available base templates.
   - `--ros`: (Required) ROS template to use. Choose from the provided ROS templates.
   - `--name`: (Required) Name for the created image.
+  - `--no_build`: (Optional) Skip the image building process. And generate the Dockerfile only.
   - `-h`: Displays help information for this command, including a summary of available options.
 
 • Launch the interactive builder for Docker images:
