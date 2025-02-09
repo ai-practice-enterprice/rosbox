@@ -18,6 +18,14 @@ def check_docker():
         print("Error running docker --version:", e)
         exit(1)
 
+def check_os():
+    if os.name == 'nt':
+        return 'windows'
+    elif os.name == 'posix':
+        return 'linux'
+    else:
+        return 'unknown'
+
 # class for creating, running, entering and stopping the containers
 class ContainerManager:
     # global defentions
@@ -51,13 +59,29 @@ class ContainerManager:
                         read_only=True  # Read-only for security
                     ))
             # create container
-            container = self.client.containers.create(
-                image_tag, name=container_name,
-                hostname=container_name.replace('_' + self.rosbox_suffix, ''),
-                detach=True,
-                mounts=mounts,
-                labels={"type": "rosbox"},
-                network_mode="host" if host_net else "bridge")
+            if check_os() == 'windows': # for running on windows
+                mounts.append(Mount(target="/tmp/.X11-unix", source="/run/desktop/mnt/host/wslg/.X11-unix", type="bind"))
+                container = self.client.containers.create(
+                    image_tag, name=container_name,
+                    hostname=container_name.replace('_' + self.rosbox_suffix, ''),
+                    detach=True,
+                    mounts=mounts,
+                    labels={"type": "rosbox"},
+                    network_mode="host" if host_net else "bridge",
+                    environment=["DISPLAY=:0"],
+                )
+            elif check_os() == 'linux': # for running on linux
+                container = self.client.containers.create(
+                    image_tag, name=container_name,
+                    hostname=container_name.replace('_' + self.rosbox_suffix, ''),
+                    detach=True,
+                    mounts=mounts,
+                    labels={"type": "rosbox"},
+                    network_mode="host" if host_net else "bridge")
+            else:
+                print("Error: Unsupported OS")
+                exit(1)
+
             print(f"Container {container_name.replace('_' + self.rosbox_suffix, '')} created successfully")
             # start container
             if auto_start:
