@@ -1,0 +1,35 @@
+[build-system]
+requires = [
+  "setuptools>=61.0",
+  "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rosbox-cli"
+version = "0.1.0"
+description = "CLI tool for managing ROS Docker environments"
+requires-python = ">=3.7"
+dependencies = [
+  "docker",
+  "jinja2",
+  "pick",
+]
+authors = [
+  { name = "Arno Joosen" }
+]
+
+[project.scripts]
+rosbox = "rosbox.rosbox:main"
+
+[tool.setuptools]
+# This tells setuptools to include package data specified in MANIFEST.in or here.
+include-package-data = true
+
+[tool.setuptools.package-data]
+rosbox = [
+  "base_templates/*.jinja",
+  "ros_templates/*.template",
+  "entrypoints_templates/*.template",
+  "entrypoints_templates/*.sh",
+]
