@@ -56,7 +56,13 @@ class ContainerManager:
                 except docker.errors.ImageNotFound:
                     print(f"Image '{DEFAULT_DOCKERHUB_IMAGES[image]}' not found locally. Pulling from Docker Hub...")
                     try:
-                        self.client.images.pull(DEFAULT_DOCKERHUB_IMAGES[image])
+                        print("Downloading image...")
+                        for line in self.client.api.pull(DEFAULT_DOCKERHUB_IMAGES[image], stream=True, decode=True):
+                            if 'progress' in line:
+                                print(f"\r{line['status']}: {line['progress']}", end='')
+                            elif 'status' in line:
+                                print(f"\r{line['status']}", end='')
+                        print("\nDownload complete!")
                         return DEFAULT_DOCKERHUB_IMAGES[image]
                     except Exception as e:
                         print(f"Error pulling image: {str(e)}")
@@ -72,6 +78,7 @@ class ContainerManager:
                     exit(1)
         else:
             print(f"Error: Image '{image}' not found in DEFAULT_IMAGES")
+            exit(1)
 
     # TODO add nvidia suport
     def create_container(self, image_tag, container_name, ros_ws_path=None, auto_start=True, ssh_dir=False, host_net=True, gpu=False):
