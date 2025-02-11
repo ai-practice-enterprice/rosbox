@@ -59,9 +59,9 @@ This is a basic example demonstrating rosbox commands:
   - `--gpu`: (Optional) Enables NVIDIA GPU passthrough to the container. (not implemented yet!!!!)
 
 - Start an existing rosbox:
-```bash
-  rosbox start <name>
-```
+   ```bash
+     rosbox start <name>
+   ```
   - `name`: The name of the rosbox container to start.
   - `-h`: Displays help information for this command, including a summary of available options.
 
@@ -99,10 +99,10 @@ This is a basic example demonstrating rosbox commands:
   - `image`: Choose from available default images to build. (`desktop`, `robot-jetracer`, `robot-jetank`, `sim`)
   - `-h`: Displays help information for this command, including a summary of available options.
 
-• Launch the interactive builder for Docker images:
-  ```bash
-  rosbox ibuilder <name>
-  ```
+- Launch the interactive builder for Docker images:
+   ```bash
+   rosbox ibuilder <name>
+   ```
   - `name`: The name assigned to the image being built.
   - `-h`: Displays help information for this command.
 
