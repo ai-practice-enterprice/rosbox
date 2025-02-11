@@ -30,15 +30,15 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push robot_jetracer image
+      - name: Build and push robot-jetracer image
         run: |
-          rosbox build robot_jetracer
+          rosbox build robot-jetracer
           docker tag rosbox-robot-jetracer sterren642/rosbox:robot-jetracer-latest
           docker push sterren642/rosbox:robot-jetracer-latest
 
       - name: Build and push robot-jetank image
         run: |
-          rosbox build robot_jetank
+          rosbox build robot-jetank
           docker tag rosbox-robot-jetank sterren642/rosbox:robot_jetank-latest
           docker push sterren642/rosbox:robot_jetank-latest
 
