@@ -22,28 +22,21 @@ Additionally, rosbox can build container images based on templates, ensuring con
 
 This is a basic example demonstrating rosbox commands:
 
-1. rosbox ibuilder:
+1. rosbox create:
    ```bash
-   rosbox ibuilder ros2
+   rosbox create desktop ros2 --ros_ws <path_to_ROS_workspace> --ssh_keys
    ```
-    - Select generation method: custom
-    - Select the base template: universal
-    - Select the ROS template: ros-desktop
-2. rosbox create:
+2. rosbox enter:
    ```bash
-   rosbox create ros2 test --ros_ws <path_to_ROS_workspace> --ssh_keys
+   rosbox enter ros2
    ```
-3. rosbox enter:
+3. rosbox stop:
    ```bash
-   rosbox enter test
+   rosbox stop ros2
    ```
-4. rosbox stop:
+4. rosbox remove:
    ```bash
-   rosbox stop test
-   ```
-5. rosbox remove:
-   ```bash
-   rosbox remove test
+   rosbox remove ros2
    ```
 
 ## Usage
