@@ -22,40 +22,35 @@ Additionally, rosbox can build container images based on templates, ensuring con
 
 This is a basic example demonstrating rosbox commands:
 
-1. rosbox ibuilder:
+1. rosbox create:
    ```bash
-   rosbox ibuilder ros2
+   rosbox create desktop ros2 --ros_ws <path_to_ROS_workspace> --ssh_keys
    ```
-    - Select generation method: custom
-    - Select the base template: universal
-    - Select the ROS template: ros-desktop
-2. rosbox create:
+2. rosbox enter:
    ```bash
-   rosbox create ros2 test --ros_ws <path_to_ROS_workspace> --ssh_keys
+   rosbox enter ros2
    ```
-3. rosbox enter:
+3. rosbox stop:
    ```bash
-   rosbox enter test
+   rosbox stop ros2
    ```
-4. rosbox stop:
+4. rosbox remove:
    ```bash
-   rosbox stop test
-   ```
-5. rosbox remove:
-   ```bash
-   rosbox remove test
+   rosbox remove ros2
    ```
 
 ## Usage
 - Create a new rosbox container:
   ```bash
-  rosbox create <image> <name> [--ros_ws <path_to_ROS_workspace>] [--no_start] [--ssh_keys] [--no_host_net]
+  rosbox create <image> <name> [--custom] [--build] [--ros_ws <path_to_ROS_workspace>] [--no_start] [--ssh_keys] [--no_host_net]
   ```
-  - `image`: Specifies the Docker image name to be used.
+  - `image`: The Docker image to use. By default, uses pre-built default images. When used with --custom flag, expects full Docker image name. When used with --build flag, builds the default image locally.
   - `name`: Defines the name of the rosbox.
-  - `--ros_ws`: (Optional) Path to your ROS workspace.
+  - `--custom`, `-c`: (Optional) Use a custom Docker image by providing its full name.
+  - `--build`, `-b`: (Optional) Build and use a local default image instead of using pre-built ones.
+  - `--ros_ws`, `-w`: (Optional) Path to your ROS workspace.
   - `--no_start`: (Optional) Prevents the container from starting immediately after creation.
-  - `--ssh_keys`: (Optional) Mounts the host’s SSH directory into the container.
+  - `--ssh_keys`, `-s`: (Optional) Mounts the host's SSH directory into the container.
     - Use this option to enable the container to access and use your SSH keys, ensuring secure authentication and remote repository access. By replicating your SSH configuration inside the container, it allows seamless Git operations and remote logins without requiring additional manual key transfers.
   - `--no_host_net`: (Optional) Do not use the host network.
     - When enabled, this flag tells rosbox to configure the Docker container with its own isolated network stack instead of sharing the host's network.
@@ -97,14 +92,11 @@ This is a basic example demonstrating rosbox commands:
   - `--no_build`: (Optional) Skip the image building process. And generate the Dockerfile only.
   - `-h`: Displays help information for this command.
 
-- Build a new Docker image using templates:
-   ```bash
-   rosbox build --base <BASE_TEMPLATE> --ros <ROS_TEMPLATE> --name <IMAGE_NAME>
-   ```
-  - `--base`: (Required) Base image to use. Options are provided by available base templates.
-  - `--ros`: (Required) ROS template to use. Choose from the provided ROS templates.
-  - `--name`: (Required) Name for the created image.
-  - `--no_build`: (Optional) Skip the image building process. And generate the Dockerfile only.
+• Build a default Docker image:
+  ```bash
+  rosbox build <image>
+  ```
+  - `image`: Choose from available default images to build. (`desktop`, `robot-jetracer`, `robot-jetank`, `sim`)
   - `-h`: Displays help information for this command, including a summary of available options.
 
 - Launch the interactive builder for Docker images:

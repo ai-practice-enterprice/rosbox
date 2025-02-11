@@ -6,8 +6,8 @@ DEFAULT_IMAGES = {
 }
 
 DEFAULT_DOCKERHUB_IMAGES = {
-    "robot-jetracer": "terren642/rosbox:robot_jetracer-latest",
-    "robot-jetank": "sterren642/rosbox:robot_jetank-latest",
+    "robot-jetracer": "terren642/rosbox:robot-jetracer-latest",
+    "robot-jetank": "sterren642/rosbox:robot-jetank-latest",
     "sim": "sterren642/rosbox:sim-latest",
     "desktop": "sterren642/rosbox:desktop-latest"
 }
