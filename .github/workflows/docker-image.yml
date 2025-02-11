@@ -32,21 +32,24 @@ jobs:
 
       - name: Build and push desktop image
         run: |
-          rosbox build desktop
-          docker tag rosbox-desktop sterren642/rosbox:desktop-${{ github.ref_name }}
-          docker tag rosbox-desktop sterren642/rosbox:desktop-latest
-          docker push sterren642/rosbox:desktop-${{ github.ref_name }}
-          docker push sterren642/rosbox:desktop-latest
+          rosbox build robot_jetracer
+          docker tag rosbox-robot_jetracer sterren642/rosbox:robot_jetracer-latest
+          docker push sterren642/rosbox:robot_jetracer-latest
 
-      - name: Cleanup old images
+      - name: Build and push desktop image
         run: |
-          # List all tags and sort by creation date
-          tags=$(curl -s -H "Authorization: Bearer ${{ secrets.DOCKER_PASSWORD }}" "https://hub.docker.com/v2/repositories/sterren642/rosbox/tags/?page_size=100" | jq -r '.results[].name' | grep -E '^desktop-' | grep -v 'desktop-latest')
-          # Keep only the latest two tags
-          tags_to_keep=$(echo "$tags" | head -n 2)
-          # Delete the rest
-          for tag in $tags; do
-            if ! echo "$tags_to_keep" | grep -qx "$tag"; then
-              curl -s -X DELETE -H "Authorization: Bearer ${{ secrets.DOCKER_PASSWORD }}" "https://hub.docker.com/v2/repositories/sterren642/rosbox/tags/$tag/"
-            fi
-          done
+          rosbox build robot_jetank
+          docker tag rosbox-robot_jetank sterren642/rosbox:robot_jetank-latest
+          docker push sterren642/rosbox:robot_jetank-latest
+
+      - name: Build and push desktop image
+        run: |
+          rosbox build robot_jetank
+          docker tag rosbox-sim sterren642/rosbox:sim-latest
+          docker push sterren642/rosbox:sim-latest
+
+      - name: Build and push desktop image
+        run: |
+          rosbox build desktop
+          docker tag rosbox-desktop sterren642/rosbox:desktop-latest
+          docker push sterren642/rosbox:desktop-latest
