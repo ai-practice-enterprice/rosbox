@@ -37,6 +37,20 @@ class ContainerManager:
         self.client = docker.from_env()
         self.interactive_builder = InteractiveBuilder(self.dockerfile_path)
 
+    def pull_image(self, image):
+        try:
+            print("Downloading image...")
+            for line in self.client.api.pull(DEFAULT_DOCKERHUB_IMAGES[image], stream=True, decode=True):
+                if 'progress' in line:
+                    print(f"\r{line['status']}: {line['progress']}", end='')
+                elif 'status' in line:
+                    print(f"\r{line['status']}", end='')
+            print("\nDownload complete!")
+            return DEFAULT_DOCKERHUB_IMAGES[image]
+        except Exception as e:
+            print(f"Error pulling image: {str(e)}")
+            exit(1)
+
     def select_default_image(self, image, pullOrBuild: bool):
         if image in DEFAULT_IMAGES:
             if pullOrBuild:
@@ -44,29 +58,17 @@ class ContainerManager:
                 # First check if image exists locally
                 try:
                     local_image = self.client.images.get(DEFAULT_DOCKERHUB_IMAGES[image])
-                    # Try to pull latest to check for updates
                     try:
-                        remote_image = self.client.images.pull(DEFAULT_DOCKERHUB_IMAGES[image])
-                        if local_image.id != remote_image.id:
-                            print(f"Updated image '{DEFAULT_DOCKERHUB_IMAGES[image]}' from Docker Hub")
+                        # Check for updates
+                        print("Checking for updates...")
+                        return self.pull_image(image)
                         return DEFAULT_DOCKERHUB_IMAGES[image]
                     except Exception as e:
                         print(f"Warning: Could not check for updates: {str(e)}")
                         return DEFAULT_DOCKERHUB_IMAGES[image]
                 except docker.errors.ImageNotFound:
                     print(f"Image '{DEFAULT_DOCKERHUB_IMAGES[image]}' not found locally. Pulling from Docker Hub...")
-                    try:
-                        print("Downloading image...")
-                        for line in self.client.api.pull(DEFAULT_DOCKERHUB_IMAGES[image], stream=True, decode=True):
-                            if 'progress' in line:
-                                print(f"\r{line['status']}: {line['progress']}", end='')
-                            elif 'status' in line:
-                                print(f"\r{line['status']}", end='')
-                        print("\nDownload complete!")
-                        return DEFAULT_DOCKERHUB_IMAGES[image]
-                    except Exception as e:
-                        print(f"Error pulling image: {str(e)}")
-                        exit(1)
+                    return self.pull_image(image)
             else:
                 print(f'use default image {DEFAULT_IMAGES[image]["image-name"]} and build locally')
                 try:
