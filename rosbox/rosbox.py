@@ -1,4 +1,5 @@
 from .imageBuilder import InteractiveBuilder
+from .defaults import DEFAULT_IMAGES, DEFAULT_DOCKERHUB_IMAGES
 import docker
 from docker.types import Mount
 import subprocess
@@ -32,16 +33,45 @@ class ContainerManager:
     rosbox_suffix = 'rosbox'
     dockerfile_path = 'Dockerfile'
 
-    DEFAULT_IMAGES = {
-        "Desktop": {"base":"universal", "ros":"ros-desktop", "entrypoint":"rosbox"},
-        "Robot_jetracer": {"base":"universal", "ros":"ros-base", "entrypoint":"rosbox"},
-        "Robot_jetank": {"base":"universal", "ros":"ros-base", "entrypoint":"rosbox"},
-        "Sim": {"base":"universal", "ros":"ros-simulation", "entrypoint":"rosbox"}
-    }
-
     def __init__(self):
         self.client = docker.from_env()
         self.interactive_builder = InteractiveBuilder(self.dockerfile_path)
+
+    def select_default_image(self, image, pullOrBuild: bool):
+        if image in DEFAULT_IMAGES:
+            if pullOrBuild:
+                print(f'use default image {DEFAULT_IMAGES[image]["image-name"]} and pull from dockerhub')
+                # First check if image exists locally
+                try:
+                    local_image = self.client.images.get(DEFAULT_DOCKERHUB_IMAGES[image])
+                    # Try to pull latest to check for updates
+                    try:
+                        remote_image = self.client.images.pull(DEFAULT_DOCKERHUB_IMAGES[image])
+                        if local_image.id != remote_image.id:
+                            print(f"Updated image '{DEFAULT_DOCKERHUB_IMAGES[image]}' from Docker Hub")
+                        return DEFAULT_DOCKERHUB_IMAGES[image]
+                    except Exception as e:
+                        print(f"Warning: Could not check for updates: {str(e)}")
+                        return DEFAULT_DOCKERHUB_IMAGES[image]
+                except docker.errors.ImageNotFound:
+                    print(f"Image '{DEFAULT_DOCKERHUB_IMAGES[image]}' not found locally. Pulling from Docker Hub...")
+                    try:
+                        self.client.images.pull(DEFAULT_DOCKERHUB_IMAGES[image])
+                        return DEFAULT_DOCKERHUB_IMAGES[image]
+                    except Exception as e:
+                        print(f"Error pulling image: {str(e)}")
+                        exit(1)
+            else:
+                print(f'use default image {DEFAULT_IMAGES[image]["image-name"]} and build locally')
+                try:
+                    self.client.images.get(DEFAULT_IMAGES[image]["image-name"])
+                    return DEFAULT_IMAGES[image]["image-name"]
+                except docker.errors.ImageNotFound:
+                    print(f"Error: Local image '{DEFAULT_IMAGES[image]['image-name']}' not found. Please build it first using:")
+                    print(f"  rosbox build {image}")
+                    exit(1)
+        else:
+            print(f"Error: Image '{image}' not found in DEFAULT_IMAGES")
 
     # TODO add nvidia suport
     def create_container(self, image_tag, container_name, ros_ws_path=None, auto_start=True, ssh_dir=False, host_net=True, gpu=False):
@@ -170,16 +200,17 @@ class ContainerManager:
             print(f"Error removing container: {str(e)}")
             raise
 
-    def build_image(self, image, image_name, no_build):
-        if image not in self.DEFAULT_IMAGES:
+    def build_image(self, image):
+        if image not in DEFAULT_IMAGES:
             print(f"Error: Image '{image}' not found in DEFAULT_IMAGES")
             exit(1)
-        base_template = self.DEFAULT_IMAGES[image]["base"]
-        ros_template = self.DEFAULT_IMAGES[image]["ros"]
-        enteryPoint_template = self.DEFAULT_IMAGES[image]["entrypoint"]
-        self.interactive_builder.generate_dockerfile(base_template, ros_template, enteryPoint_template)
-        if not no_build:
-            self.interactive_builder.build_image(image_name)
+        image_name = DEFAULT_IMAGES[image]["image-name"]
+        print(f"Building image {image_name}...")
+        base_template = DEFAULT_IMAGES[image]["base"]
+        ros_template = DEFAULT_IMAGES[image]["ros"]
+        enteryPoint_template = DEFAULT_IMAGES[image]["entrypoint"]
+        self.interactive_builder.generator.generate_dockerfile(base_template, ros_template, enteryPoint_template, self.interactive_builder.dockerfile_path)
+        self.interactive_builder.image_builder.build_image(image_name)
 
     def build_image_it(self, image_name, no_build):
         self.interactive_builder.generate_dockerfile(entryPoint = 'rosbox')
@@ -197,11 +228,16 @@ def main():
 
     # Create parser for "create" command
     create_parser = subparsers.add_parser('create', help='create rosbox')
-    create_parser.add_argument('image', help='image name for the rosbox')
+    create_parser.add_argument('image',
+        help='If no flags: default images {' + ', '.join(DEFAULT_IMAGES.keys()) + '}. ' +
+             'If --custom: full Docker image name. ' +
+             'If --build: name default images to build locally')
     create_parser.add_argument('name', help='name of the rosbox')
-    create_parser.add_argument('--ros_ws', help='path to the ROS workspace', default=None)
+    create_parser.add_argument('--custom', '-c', help='Use a custom Docker image (provide full image name)', action='store_true')
+    create_parser.add_argument('--build', '-b', help='Use locally built default image instead of prebuilt one', action='store_true')
+    create_parser.add_argument('--ros_ws', '-w', help='path to the ROS workspace', default=None)
     create_parser.add_argument('--no_start', help='disable container autostart wen created', action='store_true')
-    create_parser.add_argument('--ssh_keys', help='mount the ssh dir from host to container', action='store_true')
+    create_parser.add_argument('--ssh_keys', '-s', help='mount the ssh dir from host to container', action='store_true')
     create_parser.add_argument('--no_host_net', help='do not use the host network', action='store_true')
     # TODO add nvidia suport
     # create_parser.add_argument('--gpu', help='use nvidia runtime', action='store_true')
@@ -226,8 +262,8 @@ def main():
     remove_parser.add_argument('name', help='name of the rosbox')
 
     # Create parser for "build" command
-    build_parser = subparsers.add_parser('build', help='start rosbox')
-    build_parser.add_argument('image', help='base image')
+    build_parser = subparsers.add_parser('build', help='build a default image')
+    build_parser.add_argument('image', help='default image choose from {' + ', '.join(DEFAULT_IMAGES.keys()) + '}')
 
     # Create parser for "ibuilder" command
     ibuilder_parser = subparsers.add_parser('ibuilder', help='Build docker image using a interactive interface to select the templates')
@@ -237,7 +273,13 @@ def main():
     args = parser.parse_args()
 
     if args.command == 'create':
-        manager.create_container(args.image, args.name, args.ros_ws, not args.no_start, args.ssh_keys, not args.no_host_net)
+        if args.custom:
+            image = args.image
+        elif args.build:
+            image = manager.select_default_image(args.image, False)
+        else:
+            image = manager.select_default_image(args.image, True)
+        manager.create_container(image, args.name, args.ros_ws, not args.no_start, args.ssh_keys, not args.no_host_net)
     elif args.command == 'start':
         manager.start_container(args.name)
     elif args.command == 'enter':
@@ -249,9 +291,11 @@ def main():
     elif args.command == 'remove':
         manager.remove_container(args.name)
     elif args.command == 'build':
-        manager.build_image(args.base, args.ros, args.name, args.no_build)
+        manager.build_image(args.image)
     elif args.command == 'ibuilder':
         manager.build_image_it(args.name, args.no_build)
+    else:
+        parser.print_help()
 
 if __name__ == "__main__":
     main()
