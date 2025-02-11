@@ -33,13 +33,13 @@ jobs:
       - name: Build and push robot_jetracer image
         run: |
           rosbox build robot_jetracer
-          docker tag rosbox-robot_jetracer sterren642/rosbox:robot_jetracer-latest
-          docker push sterren642/rosbox:robot_jetracer-latest
+          docker tag rosbox-robot-jetracer sterren642/rosbox:robot-jetracer-latest
+          docker push sterren642/rosbox:robot-jetracer-latest
 
-      - name: Build and push robot_jetank image
+      - name: Build and push robot-jetank image
         run: |
           rosbox build robot_jetank
-          docker tag rosbox-robot_jetank sterren642/rosbox:robot_jetank-latest
+          docker tag rosbox-robot-jetank sterren642/rosbox:robot_jetank-latest
           docker push sterren642/rosbox:robot_jetank-latest
 
       - name: Build and push sim image
