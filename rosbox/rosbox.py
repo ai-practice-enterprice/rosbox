@@ -252,6 +252,8 @@ def main():
         manager.build_image(args.base, args.ros, args.name, args.no_build)
     elif args.command == 'ibuilder':
         manager.build_image_it(args.name, args.no_build)
+    else:
+        parser.print_help()
 
 if __name__ == "__main__":
     main()
