@@ -32,6 +32,13 @@ class ContainerManager:
     rosbox_suffix = 'rosbox'
     dockerfile_path = 'Dockerfile'
 
+    DEFAULT_IMAGES = {
+        "Desktop": {"base":"universal", "ros":"ros-desktop", "entrypoint":"rosbox"},
+        "Robot_jetracer": {"base":"universal", "ros":"ros-base", "entrypoint":"rosbox"},
+        "Robot_jetank": {"base":"universal", "ros":"ros-base", "entrypoint":"rosbox"},
+        "Sim": {"base":"universal", "ros":"ros-simulation", "entrypoint":"rosbox"}
+    }
+
     def __init__(self):
         self.client = docker.from_env()
         self.interactive_builder = InteractiveBuilder(self.dockerfile_path)
@@ -42,13 +49,6 @@ class ContainerManager:
         try:
             # create mounts
             mounts = []
-            if ros_ws_path:
-                mounts.append(Mount(
-                    target="/home/ubuntu/ros_ws",
-                    source=os.path.abspath(ros_ws_path),
-                    type="bind",
-                    read_only=False
-                ))
             if ssh_dir:
                 ssh_path = os.path.expanduser("~/.ssh")
                 if os.path.exists(ssh_path):
@@ -60,6 +60,15 @@ class ContainerManager:
                     ))
             # create container
             if check_os() == 'windows': # for running on windows
+                # add ros_ws mount for ROS workspace
+                if ros_ws_path:
+                    mounts.append(Mount(
+                        target="/home/ubuntu/ros_ws",
+                        source=os.path.abspath(ros_ws_path),
+                        type="bind",
+                        read_only=False
+                    ))
+                # add X11 mount for GUI support on windows
                 mounts.append(Mount(target="/tmp/.X11-unix", source="/run/desktop/mnt/host/wslg/.X11-unix", type="bind"))
                 container = self.client.containers.create(
                     image_tag, name=container_name,
@@ -71,13 +80,28 @@ class ContainerManager:
                     environment=["DISPLAY=:0"],
                 )
             elif check_os() == 'linux': # for running on linux
+                # add ros_ws mount for ROS workspace
+                if ros_ws_path:
+                    mounts.append(Mount(
+                        target="/home/ubuntu/ros_ws",
+                        source=os.path.abspath(ros_ws_path),
+                        type="bind",
+                        read_only=False,
+                        propagation="rslave"
+                    ))
+                # add X11 and Xauthority mounts for GUI support on linux
+                mounts.append(Mount(target="/tmp/.X11-unix", source="/tmp/.X11-unix", type="bind"))
+                mounts.append(Mount(target=os.environ.get('XAUTHORITY'), source=os.environ.get('XAUTHORITY'), type="bind", read_only=True))
+                # create container
                 container = self.client.containers.create(
                     image_tag, name=container_name,
                     hostname=container_name.replace('_' + self.rosbox_suffix, ''),
                     detach=True,
                     mounts=mounts,
                     labels={"type": "rosbox"},
-                    network_mode="host" if host_net else "bridge")
+                    network_mode="host" if host_net else "bridge",
+                    environment=["DISPLAY=:0", "XAUTHORITY=" + str(os.environ.get('XAUTHORITY'))],
+                )
             else:
                 print("Error: Unsupported OS")
                 exit(1)
@@ -146,8 +170,14 @@ class ContainerManager:
             print(f"Error removing container: {str(e)}")
             raise
 
-    def build_image(self, base_template, ros_template, image_name, no_build):
-        self.interactive_builder.generate_dockerfile(base_template, ros_template, 'rosbox')
+    def build_image(self, image, image_name, no_build):
+        if image not in self.DEFAULT_IMAGES:
+            print(f"Error: Image '{image}' not found in DEFAULT_IMAGES")
+            exit(1)
+        base_template = self.DEFAULT_IMAGES[image]["base"]
+        ros_template = self.DEFAULT_IMAGES[image]["ros"]
+        enteryPoint_template = self.DEFAULT_IMAGES[image]["entrypoint"]
+        self.interactive_builder.generate_dockerfile(base_template, ros_template, enteryPoint_template)
         if not no_build:
             self.interactive_builder.build_image(image_name)
 
@@ -197,10 +227,7 @@ def main():
 
     # Create parser for "build" command
     build_parser = subparsers.add_parser('build', help='start rosbox')
-    build_parser.add_argument('--base', help=f'Base image to use. Options: {list(manager.interactive_builder.generator.base_templates.keys())}', required=True)
-    build_parser.add_argument('--ros', help=f'ROS template to use. Options: {list(manager.interactive_builder.generator.ros_templates.keys())}', required=True)
-    build_parser.add_argument('--name', help='name of the image', required=True)
-    build_parser.add_argument('--no_build', help='do not build the image but only generate the Dockerfile', action='store_true')
+    build_parser.add_argument('image', help='base image')
 
     # Create parser for "ibuilder" command
     ibuilder_parser = subparsers.add_parser('ibuilder', help='Build docker image using a interactive interface to select the templates')
