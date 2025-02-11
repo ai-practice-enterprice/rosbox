@@ -14,7 +14,7 @@ Additionally, rosbox can build container images based on templates, ensuring con
 3. Go to the root of project.
 4. run:
     ```bash
-    pip install .
+    pip install -e .
     ```
 5. Now you can use robox anywhere in the command line.
 
@@ -44,40 +44,40 @@ This is a basic example demonstrating rosbox commands:
   ```bash
   rosbox create <image> <name> [--custom] [--build] [--ros_ws <path_to_ROS_workspace>] [--no_start] [--ssh_keys] [--no_host_net]
   ```
-  - `image`: The Docker image to use. By default, uses pre-built default images. When used with --custom flag, expects full Docker image name. When used with --build flag, builds the default image locally.
-  - `name`: Defines the name of the rosbox.
-  - `--custom`, `-c`: (Optional) Use a custom Docker image by providing its full name.
-  - `--build`, `-b`: (Optional) Build and use a local default image instead of using pre-built ones.
-  - `--ros_ws`, `-w`: (Optional) Path to your ROS workspace.
-  - `--no_start`: (Optional) Prevents the container from starting immediately after creation.
-  - `--ssh_keys`, `-s`: (Optional) Mounts the host's SSH directory into the container.
-    - Use this option to enable the container to access and use your SSH keys, ensuring secure authentication and remote repository access. By replicating your SSH configuration inside the container, it allows seamless Git operations and remote logins without requiring additional manual key transfers.
-  - `--no_host_net`: (Optional) Do not use the host network.
-    - When enabled, this flag tells rosbox to configure the Docker container with its own isolated network stack instead of sharing the host's network.
-    - This setup enhances security and helps prevent potential network conflicts between the container and the host system.
-  - `-h`: Displays help information for this command, including a summary of available options.
-  - `--gpu`: (Optional) Enables NVIDIA GPU passthrough to the container. (not implemented yet!!!!)
+    - `image`: The Docker image to use. By default, uses pre-built default images. When used with --custom flag, expects full Docker image name. When used with --build flag, builds the default image locally.
+    - `name`: Defines the name of the rosbox.
+    - `--custom`, `-c`: (Optional) Use a custom Docker image by providing its full name.
+    - `--build`, `-b`: (Optional) Build and use a local default image instead of using pre-built ones.
+    - `--ros_ws`, `-w`: (Optional) Path to your ROS workspace.
+    - `--no_start`: (Optional) Prevents the container from starting immediately after creation.
+    - `--ssh_keys`, `-s`: (Optional) Mounts the host's SSH directory into the container.
+      - Use this option to enable the container to access and use your SSH keys, ensuring secure authentication and remote repository access. By replicating your SSH configuration inside the container, it allows seamless Git operations and remote logins without requiring additional manual key transfers.
+    - `--no_host_net`: (Optional) Do not use the host network.
+      - When enabled, this flag tells rosbox to configure the Docker container with its own isolated network stack instead of sharing the host's network.
+      - This setup enhances security and helps prevent potential network conflicts between the container and the host system.
+    - `-h`: Displays help information for this command, including a summary of available options.
+    - `--gpu`: (Optional) Enables NVIDIA GPU passthrough to the container. (not implemented yet!!!!)
 
 - Start an existing rosbox:
    ```bash
      rosbox start <name>
    ```
-  - `name`: The name of the rosbox container to start.
-  - `-h`: Displays help information for this command, including a summary of available options.
+    - `name`: The name of the rosbox container to start.
+    - `-h`: Displays help information for this command, including a summary of available options.
 
 - Enter a running rosbox container:
   ```bash
   rosbox enter <name>
   ```
-  - `name`: The name of the rosbox container to access.
-  - `-h`: Displays help information for this command, including a summary of available options.
+    - `name`: The name of the rosbox container to access.
+    - `-h`: Displays help information for this command, including a summary of available options.
 
 - Stop a running rosbox container:
   ```bash
   rosbox stop <name>
   ```
-  - `name`: The name of the rosbox container to stop.
-  - `-h`: Displays help information for this command,.
+    - `name`: The name of the rosbox container to stop.
+    - `-h`: Displays help information for this command,.
 
 - List all available rosboxes:
   ```bash
@@ -88,11 +88,11 @@ This is a basic example demonstrating rosbox commands:
   ```bash
   rosbox remove <name>
   ```
-  - `name`: The name of the rosbox container to remove.
-  - `--no_build`: (Optional) Skip the image building process. And generate the Dockerfile only.
-  - `-h`: Displays help information for this command.
+    - `name`: The name of the rosbox container to remove.
+    - `--no_build`: (Optional) Skip the image building process. And generate the Dockerfile only.
+    - `-h`: Displays help information for this command.
 
-• Build a default Docker image:
+- Build a default Docker image:
   ```bash
   rosbox build <image>
   ```
@@ -103,8 +103,8 @@ This is a basic example demonstrating rosbox commands:
    ```bash
    rosbox ibuilder <name>
    ```
-  - `name`: The name assigned to the image being built.
-  - `-h`: Displays help information for this command.
+    - `name`: The name assigned to the image being built.
+    - `-h`: Displays help information for this command.
 
 ## image templates
 ### default
