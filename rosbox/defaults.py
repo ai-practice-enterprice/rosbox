@@ -6,8 +6,8 @@ DEFAULT_IMAGES = {
 }
 
 DEFAULT_DOCKERHUB_IMAGES = {
-    "desktop": "yourdockerhub_username/rosbox:ros-desktop",
     "robot_jetracer": "yourdockerhub_username/rosbox:ros-base",
     "robot_jetank": "yourdockerhub_username/rosbox:ros-base",
-    "sim": "yourdockerhub_username/rosbox:ros-simulation"
+    "sim": "yourdockerhub_username/rosbox:ros-simulation",
+    "desktop": "yourdockerhub_username/rosbox:ros-desktop"
 }

@@ -33,5 +33,5 @@ jobs:
       - name: Build and push desktop image
         run: |
           rosbox build desktop
-          docker tag desktop sterren642/rosbox:desktop-${{ github.ref_name }}
+          docker tag rosbox-desktop sterren642/rosbox:desktop-${{ github.ref_name }}
           docker push sterren642/rosbox:desktop-${{ github.ref_name }}
