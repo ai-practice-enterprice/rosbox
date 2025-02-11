@@ -40,7 +40,7 @@ class ContainerManager:
     def select_default_image(self, image, pullOrBuild: bool):
         if image in DEFAULT_IMAGES:
             if pullOrBuild:
-                print(f'use default image {DEFAULT_IMAGES[image]["image-name"]} and pull from dockerhub')
+                print(f'use default image {DEFAULT_IMAGES[image]["image-name"]} from dockerhub')
                 # First check if image exists locally
                 try:
                     local_image = self.client.images.get(DEFAULT_DOCKERHUB_IMAGES[image])
@@ -83,6 +83,12 @@ class ContainerManager:
     # TODO add nvidia suport
     def create_container(self, image_tag, container_name, ros_ws_path=None, auto_start=True, ssh_dir=False, host_net=True, gpu=False):
         container_name = f"{container_name}_{self.rosbox_suffix}"
+        try:
+            existing_container = self.client.containers.get(container_name)
+            print(f"Error: Container with name '{container_name.replace('_' + self.rosbox_suffix, '')}' already exists")
+            exit(1)
+        except docker.errors.NotFound:
+            pass
         try:
             # create mounts
             mounts = []
