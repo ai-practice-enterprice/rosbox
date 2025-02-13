@@ -37,6 +37,45 @@ class ContainerManager:
         self.client = docker.from_env()
         self.interactive_builder = InteractiveBuilder(self.dockerfile_path)
 
+    def check_container_image_update(self, container_name):
+        client = docker.from_env()
+
+        try:
+            # Get the container
+            container = client.containers.get(container_name)
+
+            # Get the current image details
+            current_image = container.image
+            current_tag = current_image.tags[0]
+
+            # Get the local image digest
+            local_digest = current_image.attrs['RepoDigests'][0].split('@')[1]
+
+            # Get the remote image digest
+            remote_image = client.images.get_registry_data(current_tag)
+            remote_digest = remote_image.attrs['Descriptor']['digest']
+
+            if local_digest != remote_digest:
+                print(f"Update available for container '{container_name}'")
+                print(f"Local digest: {local_digest}")
+                print(f"Remote digest: {remote_digest}")
+                return True
+            else:
+                return False
+
+        except docker.errors.NotFound:
+            print(f"Container '{container_name}' not found")
+            exit(1)
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            exit(1)
+        except docker.errors.NotFound:
+            print(f"Container '{container_name}' not found")
+            exit(1)
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            exit(1)
+
     def pull_image(self, image):
         try:
             print("Downloading image...")
@@ -160,6 +199,47 @@ class ContainerManager:
             print(f"Error creating container: {str(e)}")
             raise
 
+    def update_container(self, container_name):
+        # check if container exists
+        container_name = f"{container_name}_{self.rosbox_suffix}"
+        try:
+            self.client.containers.get(container_name) # check if container exists
+            if not self.check_container_image_update(container_name):
+                # Download new image
+                container = self.client.containers.get(container_name)
+                current_tag = container.image.tags[0]
+                print("Pulling new image from Docker Hub...")
+                self.client.images.pull(current_tag)
+                print("Image updated successfully")
+                # get container properys from config
+                mounts = container.attrs['Mounts']
+                # check mounted volumes
+                ssh_dir = False
+                ros_ws_path = None
+                for mount in mounts:
+                    # Check for SSH mount
+                    if mount['Target'] == '/home/ubuntu/.ssh':
+                        ssh_dir = True
+                    # Check for ROS workspace mount
+                    elif mount['Target'] == '/home/ubuntu/ros_ws':
+                        ros_ws_path = mount['Source']
+
+                # Get network settings
+                host_net = container.attrs['HostConfig']['NetworkMode'] == 'host'
+
+                # Create new container with same properties
+                self.create_container(current_tag, container_name, ros_ws_path, True, ssh_dir, host_net)
+                # Remove old container
+                container.stop()
+                container.remove()
+
+            else:
+                print(f"Container '{container_name}' is up to date")
+                exit(1)
+        except docker.errors.NotFound:
+            print(f"Error: Container with name '{container_name.replace('_' + self.rosbox_suffix, '')}' not found")
+            exit(1)
+
     def start_container(self, container_name):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
@@ -257,6 +337,10 @@ def main():
     # TODO add nvidia suport
     # create_parser.add_argument('--gpu', help='use nvidia runtime', action='store_true')
 
+    # Update parser for "update" command
+    update_parser = subparsers.add_parser('update', help='update rosbox deletes the old container and creates a new one with the new image (everything will be lost only the mountet volumes will be saved)')
+    update_parser.add_argument('name', help='name of the rosbox')
+
     # Create parser for "start" command
     start_parser = subparsers.add_parser('start', help='start rosbox')
     start_parser.add_argument('name', help='name of the rosbox')
@@ -295,6 +379,8 @@ def main():
         else:
             image = manager.select_default_image(args.image, True)
         manager.create_container(image, args.name, args.ros_ws, not args.no_start, args.ssh_keys, not args.no_host_net)
+    elif args.command == 'update':
+        manager.update_container(args.name)
     elif args.command == 'start':
         manager.start_container(args.name)
     elif args.command == 'enter':
