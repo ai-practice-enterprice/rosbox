@@ -17,6 +17,14 @@ Additionally, rosbox can build container images based on templates, ensuring con
     pip install -e .
     ```
 5. Now you can use robox anywhere in the command line.
+6. test rosbox command:
+    ```bash
+    rosbox --help
+    ```
+  - if you get the help message, you have successfully installed rosbox.
+  - if you get an error on windows
+    - You can use ```python -m rosbox.rosbox``` instead of ```rosbox```
+    - Or you may need to add the python scripts folder to your PATH environment variable.
 
 ## Basic Example
 
