@@ -232,6 +232,9 @@ class ContainerManager:
         if not no_build:
             self.interactive_builder.build_image(image_name)
 
+    def distrobox(self, image_tag, container_name, home_dir=None):
+        pass
+
 def main():
     # check first if docker is installed
     check_docker()
@@ -256,6 +259,14 @@ def main():
     create_parser.add_argument('--no_host_net', help='do not use the host network', action='store_true')
     # TODO add nvidia suport
     # create_parser.add_argument('--gpu', help='use nvidia runtime', action='store_true')
+
+    # distrobox support only for linux
+    if check_os() == 'Linux':
+        distrobox_parser = subparsers.add_parser('distrobox', help='use distrobox instead of docker', action='store_true')
+        distrobox_parser.add_argument('name', help='name of the rosbox')
+        distrobox_parser.add_argument('--custom', '-c', help='Use a custom Docker image (provide full image name)', action='store_true')
+        distrobox_parser.add_argument('--build', '-b', help='Use locally built default image instead of prebuilt one', action='store_true')
+        distrobox_parser.add_argument('--home_dir', help='path to the home directory in the container', default=None)
 
     # Create parser for "start" command
     start_parser = subparsers.add_parser('start', help='start rosbox')
@@ -295,8 +306,14 @@ def main():
         else:
             image = manager.select_default_image(args.image, True)
         manager.create_container(image, args.name, args.ros_ws, not args.no_start, args.ssh_keys, not args.no_host_net)
-    elif args.command == 'start':
-        manager.start_container(args.name)
+    elif check_os() == 'linux' and args.command == 'distrobox':
+        if args.custom:
+            image = args.image
+        elif args.build:
+            image = manager.select_default_image(args.image, False)
+        else:
+            image = manager.select_default_image(args.image, True)
+        manager.distrobox(image, args.name, args.home_dir)
     elif args.command == 'enter':
         manager.enter_container(args.name)
     elif args.command == 'stop':
