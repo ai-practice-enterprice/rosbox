@@ -218,17 +218,17 @@ class ContainerManager:
                 ros_ws_path = None
                 for mount in mounts:
                     # Check for SSH mount
-                    if mount['Target'] == '/home/ubuntu/.ssh':
+                    if mount['Destination'] == '/home/ubuntu/.ssh':
                         ssh_dir = True
                     # Check for ROS workspace mount
-                    elif mount['Target'] == '/home/ubuntu/ros_ws':
+                    elif mount['Destination'] == '/home/ubuntu/ros_ws':
                         ros_ws_path = mount['Source']
 
                 # Get network settings
                 host_net = container.attrs['HostConfig']['NetworkMode'] == 'host'
 
                 # Create new container with same properties
-                self.create_container(current_tag, container_name, ros_ws_path, True, ssh_dir, host_net)
+                self.create_container(current_tag, container_name.replace('_' + self.rosbox_suffix, ''), ros_ws_path, True, ssh_dir, host_net)
                 # Remove old container
                 container.stop()
                 container.remove()
