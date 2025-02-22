@@ -2,4 +2,4 @@ include rosbox/base_templates/*.jinja
 include rosbox/ros_templates/*.template
 include rosbox/entrypoints_templates/*.template
 include rosbox/entrypoints_templates/*.sh
-include rosbox/extensions.json
+include rosbox/default_templates/*.template
