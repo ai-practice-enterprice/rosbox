@@ -304,7 +304,7 @@ class ContainerManager:
         base_template = DEFAULT_IMAGES[image]["base"]
         ros_template = DEFAULT_IMAGES[image]["ros"]
         enteryPoint_template = DEFAULT_IMAGES[image]["entrypoint"]
-        self.interactive_builder.generator.generate_dockerfile(base_template, ros_template, enteryPoint_template, self.interactive_builder.dockerfile_path)
+        self.interactive_builder.generator.generate_dockerfile(base_template, ros_template, [], enteryPoint_template, self.interactive_builder.dockerfile_path)
         self.interactive_builder.image_builder.build_image(image_name)
 
     def build_image_it(self, image_name, no_build):
