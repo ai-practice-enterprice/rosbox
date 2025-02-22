@@ -7,8 +7,8 @@ import json
 current_dir = os.path.dirname(__file__)
 base_templates_path = os.path.join(current_dir, 'base_templates')
 ros_templates_path = os.path.join(current_dir, 'ros_templates')
+default_templates_path = os.path.join(current_dir, 'default_templates')
 entrypoints_templates_path = os.path.join(current_dir, 'entrypoints_templates')
-extensions_file = os.path.join(current_dir, 'extensions.json')
 
 default_base_template = 'universal'
 default_ros_template = 'ros-desktop'
@@ -20,6 +20,7 @@ class DockerfileGenerator:
     def __init__(self):
         self.base_templates = self.load_base_templates_options()
         self.ros_templates = self.load_ros_templates_options()
+        self.default_templates = self.load_default_templates_options()
         self.entrypoints_templates = self.load_entrypoints_templates_options()
 
     def load_base_templates_options(self):
@@ -40,6 +41,15 @@ class DockerfileGenerator:
                 template_files[key] = os.path.join(ros_templates_path, filename)
         return template_files
 
+    def load_default_templates_options(self):
+        template_files = {}
+        for filename in os.listdir(default_templates_path):
+            if filename.endswith('.template'):
+                key = filename.replace('.template', '')
+                key = key.replace('Dockerfile.', '')
+                template_files[key] = os.path.join(default_templates_path, filename)
+        return template_files
+
     def load_entrypoints_templates_options(self):
         template_files = {}
         for filename in os.listdir(entrypoints_templates_path):
@@ -49,23 +59,11 @@ class DockerfileGenerator:
                 template_files[key] = os.path.join(entrypoints_templates_path, filename)
         return template_files
 
-    def load_extensions_templates_options(self, extensions_path):
-        extensions = {}
-        with open(extensions_path, 'r') as file:
-            data = json.loads(file.read())
-            extensions_json = data["template_extensions"]
-            for extension_name, sub in extensions_json.items():
-                commandstr = ''
-                for command in sub["commands"]:
-                    commandstr += f"RUN {command}\n"
-                extensions[extension_name] = commandstr
-        return extensions
-
-    def generate_dockerfile(self, base_template, ros_template, entrypoint_template, extension_list, output_file):
+    def generate_dockerfile(self, base_template, ros_template, entrypoint_template, output_file, default_template = None):
         ros_template = self.ros_templates[ros_template]
         base_template = self.base_templates[base_template]
+        default_template = self.default_templates[default_template]
         entrypoint_template = self.entrypoints_templates[entrypoint_template]
-        extensions = self.load_extensions_templates_options(extensions_file)
 
         # Read the ROS install Dockerfile template from its file
         ros_dockerfile_template = ""
@@ -77,17 +75,17 @@ class DockerfileGenerator:
         with open(entrypoint_template, 'r') as file:
             entrypoint_template_str = file.read()
 
-        # generate extension section
-        extension_section = ""
-        print(extension_list)
-        for extension_name in extension_list:
-            extension_section += extensions[extension_name]
+        # Add default template
+        default_template_str = ""
+        if default_template != None:
+            with open(default_template, 'r') as file:
+                default_template_str = file.read()
 
         # Define the context mapping that will be used to render the base template
         context = {
             'ros_install': ros_dockerfile_template,
             'entrypoint_setup': entrypoint_template_str,
-            'extensions_install': extension_section
+            'default': default_template_str
         }
 
         # Render the base template with the provided context data
@@ -129,7 +127,6 @@ class InteractiveBuilder:
         self.selected_base = default_base_template
         self.selected_ros = default_ros_template
         self.selected_entrypoint = default_entrypoint_template
-        self.selected_extension = []
 
     def select_base_template(self):
         options = list(self.generator.base_templates.keys())
@@ -146,17 +143,7 @@ class InteractiveBuilder:
         title = "Choose an entrypoint template:"
         self.selected_entrypoint, _ = pick(options, title)
 
-    def select_extension_template(self):
-        title = "Choose your favorite programming language(use space to select)"
-        extension_keys = list(self.generator.load_extensions_templates_options(extensions_file).keys())
-        out = pick(extension_keys, title, multiselect=True, min_selection_count=0)
-        selected_extension_list = []
-        for item, _ in out:
-            selected_extension_list.append(item)
-        out = selected_extension_list
-        return out
-
-    def generate_dockerfile(self, base = None, ros = None, entryPoint = None, extension = []):
+    def generate_dockerfile(self, base = None, ros = None, entryPoint = None):
         options = ["default", "custom"]
         title = "Choose a generation method:"
         selected_option, _ = pick(options, title)
@@ -173,10 +160,6 @@ class InteractiveBuilder:
                 self.select_entrypoint_template()
             else:
                 self.selected_entrypoint = entryPoint
-            if extension == []:
-                self.selected_extension = self.select_extension_template()
-            else:
-                self.selected_extension = extension
         else:
             if base != None:
                 self.selected_base = base
@@ -185,13 +168,10 @@ class InteractiveBuilder:
             if entryPoint != None:
                 self.selected_entrypoint = entryPoint
 
-        print(self.selected_extension)
-
         self.generator.generate_dockerfile(
             self.selected_base,
             self.selected_ros,
             self.selected_entrypoint,
-            self.selected_extension,
             self.dockerfile_path)
         print("Dockerfile generated successfully")
 

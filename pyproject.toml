@@ -23,5 +23,4 @@ rosbox = [
     "ros_templates/*.template",
     "entrypoints_templates/*.template",
     "entrypoints_templates/*.sh",
-    "extensions.json",
 ]
