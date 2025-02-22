@@ -22,5 +22,6 @@ rosbox = [
     "base_templates/*.jinja",
     "ros_templates/*.template",
     "entrypoints_templates/*.template",
+    "default_templates/*.template",
     "entrypoints_templates/*.sh",
 ]
