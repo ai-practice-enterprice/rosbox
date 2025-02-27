@@ -154,6 +154,7 @@ class ContainerManager:
                     ))
                 # add X11 mount for GUI support on windows
                 mounts.append(Mount(target="/tmp/.X11-unix", source="/run/desktop/mnt/host/wslg/.X11-unix", type="bind"))
+                mounts.append(Mount(target="/dev", source="/dev", type="bind"))
                 container = self.client.containers.create(
                     image_tag, name=container_name,
                     hostname=container_name.replace('_' + self.rosbox_suffix, ''),
@@ -162,6 +163,7 @@ class ContainerManager:
                     labels={"type": "rosbox"},
                     network_mode="host" if host_net else "bridge",
                     environment=["DISPLAY=:0"],
+                    privileged = True
                 )
             elif check_os() == 'linux': # for running on linux
                 # add ros_ws mount for ROS workspace
@@ -176,6 +178,7 @@ class ContainerManager:
                 # add X11 and Xauthority mounts for GUI support on linux
                 mounts.append(Mount(target="/tmp/.X11-unix", source="/tmp/.X11-unix", type="bind"))
                 mounts.append(Mount(target=os.environ.get('XAUTHORITY'), source=os.environ.get('XAUTHORITY'), type="bind", read_only=True))
+                mounts.append(Mount(target="/dev", source="/dev", type="bind"))
                 # create container
                 container = self.client.containers.create(
                     image_tag, name=container_name,
@@ -185,6 +188,7 @@ class ContainerManager:
                     labels={"type": "rosbox"},
                     network_mode="host" if host_net else "bridge",
                     environment=["DISPLAY=:0", "XAUTHORITY=" + str(os.environ.get('XAUTHORITY'))],
+                    privileged=True
                 )
             else:
                 print("Error: Unsupported OS")
