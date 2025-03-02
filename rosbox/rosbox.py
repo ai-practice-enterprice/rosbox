@@ -234,7 +234,7 @@ class ContainerManager:
             print(f"Error stopping container: {str(e)}")
             raise
 
-    def list_containers(self):
+    def list_containers_docker(self):
         containers = [c for c in self.client.containers.list(all=True, filters={"label": "type=rosbox"})]
         print(f"{'ID':<12} | {'NAME':<20} | {'STATUS':<20} | {'IMAGE':<20}")
         print("-" * 72)
@@ -242,6 +242,50 @@ class ContainerManager:
             name = container.name.replace("_" + self.rosbox_suffix, "")
             print(f"{container.short_id:<12} | {name:<20} | {container.status:<20} | {container.image.tags[0]:<20}")
         print(("-" * 72) + "\n")
+
+    def list_containers_distrobox(self):
+        try:
+            # Check if distrobox is installed
+            result = subprocess.run(['which', 'distrobox'],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+            if result.returncode != 0:
+                print("Error: distrobox is not installed. Please install distrobox first!")
+                return
+
+            # List all distrobox containers
+            result = subprocess.run(['distrobox', 'list'],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+
+            if result.returncode != 0:
+                print(f"Error listing distrobox containers: {result.stderr}")
+                return
+
+            # Filter only distrobox containers with _rosbox suffix
+            containers = []
+            lines = result.stdout.strip().split('\n')
+
+            # Skip header line
+            if len(lines) > 1:
+                header = lines[0]
+                print(header)
+                print("-" * len(header))
+
+                for line in lines[1:]:
+                    if f"_{self.rosbox_suffix}" in line:
+                        print(line)
+                        containers.append(line)
+
+                if not containers:
+                    print(f"No distrobox containers with _{self.rosbox_suffix} suffix found.")
+            else:
+                print("No distrobox containers found.")
+
+        except Exception as e:
+            print(f"Error listing distrobox containers: {str(e)}")
 
     def remove_container(self, container_name):
         container_name = f"{container_name}_{self.rosbox_suffix}"
@@ -360,7 +404,10 @@ def main():
     elif args.command == 'stop':
         manager.stop_container(args.name)
     elif args.command == 'list':
-        manager.list_containers()
+        if manager.config["container_manager"] == "docker":
+            manager.list_containers_docker()
+        elif manager.config["container_manager"] == "distrobox":
+            manager.list_containers_distrobox()
     elif args.command == 'remove':
         manager.remove_container(args.name)
     elif args.command == 'build':
