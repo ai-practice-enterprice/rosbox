@@ -36,6 +36,7 @@ class ContainerManager:
     def __init__(self):
         self.client = docker.from_env()
         self.interactive_builder = InteractiveBuilder(self.dockerfile_path)
+        self.config = load_config()
 
     def pull_image(self, image):
         try:
