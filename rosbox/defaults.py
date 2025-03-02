@@ -6,8 +6,8 @@ DEFAULT_IMAGES = {
 }
 
 DEFAULT_DOCKERHUB_IMAGES = {
-    "robot-jetracer": "terren642/rosbox:robot-jetracer-latest",
-    "robot-jetank": "sterren642/rosbox:robot-jetank-latest",
-    "sim": "sterren642/rosbox:sim-latest",
-    "desktop": "sterren642/rosbox:desktop-latest"
+    "robot-jetracer": "docker.io/sterren642/rosbox:robot-jetracer-latest",
+    "robot-jetank": "docker.io/sterren642/rosbox:robot-jetank-latest",
+    "sim": "docker.io/sterren642/rosbox:sim-latest",
+    "desktop": "docker.io/sterren642/rosbox:desktop-latest"
 }

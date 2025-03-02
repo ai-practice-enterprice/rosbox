@@ -1,3 +1,4 @@
+from .config import load_config, save_config, update_config
 from .imageBuilder import InteractiveBuilder
 from .defaults import DEFAULT_IMAGES, DEFAULT_DOCKERHUB_IMAGES
 import docker
@@ -84,7 +85,7 @@ class ContainerManager:
             exit(1)
 
     # TODO add nvidia suport
-    def create_container(self, image_tag, container_name, ros_ws_path=None, auto_start=True, ssh_dir=False, host_net=True, gpu=False):
+    def create_container_docker(self, image_tag, container_name, ros_ws_path=None, auto_start=True, ssh_dir=False, host_net=True, gpu=False):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
             existing_container = self.client.containers.get(container_name)
@@ -163,6 +164,42 @@ class ContainerManager:
                 print(f"Container {container_name.replace('_' + self.rosbox_suffix, '')} started successfully")
         except Exception as e:
             print(f"Error creating container: {str(e)}")
+            raise
+
+    def create_container_distrobox(self, image_tag, container_name, home_dir=None):
+        container_name = f"{container_name}_{self.rosbox_suffix}"
+        print(f"Creating container {container_name} with image {image_tag}")
+        try:
+            # Check if distrobox is installed
+            result = subprocess.run(['which', 'distrobox'],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+            if result.returncode != 0:
+                print("Error: distrobox is not installed. Please install distrobox first!")
+                exit(1)
+
+            # Prepare command
+            cmd = ['distrobox', 'create', '-i', image_tag, '-n', container_name]
+
+            # Add home directory if specified
+            if home_dir:
+                cmd.extend(['--home', os.path.abspath(home_dir)])
+
+            # Create the distrobox container
+            result = subprocess.run(cmd,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+
+            if result.returncode != 0:
+                print(f"Error creating distrobox container: {result.stderr}")
+                exit(1)
+            else:
+                print(f"Distrobox container {container_name.replace('_' + self.rosbox_suffix, '')} created successfully")
+
+        except Exception as e:
+            print(f"Error creating distrobox container: {str(e)}")
             raise
 
     def start_container(self, container_name):
@@ -294,13 +331,23 @@ def main():
     args = parser.parse_args()
 
     if args.command == 'create':
-        if args.custom:
-            image = args.image
-        elif args.build:
-            image = manager.select_default_image(args.image, False)
-        else:
-            image = manager.select_default_image(args.image, True)
-        manager.create_container(image, args.name, args.ros_ws, not args.no_start, args.ssh_keys, not args.no_host_net)
+        if manager.config["container_manager"] == "docker":
+            if args.custom:
+                image = args.image
+            elif args.build:
+                image = manager.select_default_image(args.image, False)
+            else:
+                image = manager.select_default_image(args.image, True)
+            manager.create_container_docker(image, args.name, args.ros_ws, not args.no_start, args.ssh_keys, not args.no_host_net)
+        elif manager.config["container_manager"] == "distrobox":
+            if args.custom:
+                image = args.image
+            elif args.build:
+                image = manager.select_default_image(args.image, False)
+            else:
+                image = manager.select_default_image(args.image, True)
+            print(f"Creating container {args.name} with image {image}")
+            manager.create_container_distrobox(image, args.name, args.ros_ws,)
     elif args.command == 'start':
         manager.start_container(args.name)
     elif args.command == 'enter':
