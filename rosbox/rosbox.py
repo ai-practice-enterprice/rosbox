@@ -211,7 +211,7 @@ class ContainerManager:
             print(f"Error starting container: {str(e)}")
             raise
 
-    def enter_container(self, container_name):
+    def enter_container_docker(self, container_name):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
             container = self.client.containers.get(container_name)
@@ -222,6 +222,25 @@ class ContainerManager:
             subprocess.run(command, shell=True)
         except Exception as e:
             print(f"Error entering container: {str(e)}")
+            raise
+
+    def enter_container_distrobox(self, cotnaienr_name):
+        container_name = f"{cotnaienr_name}_{self.rosbox_suffix}"
+        try:
+            # Check if distrobox is installed
+            result = subprocess.run(['which', 'distrobox'],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+            if result.returncode != 0:
+                print("Error: distrobox is not installed. Please install distrobox first!")
+                exit(1)
+
+            # Enter the distrobox container
+            command = f"distrobox enter {container_name}"
+            subprocess.run(command, shell=True)
+        except Exception as e:
+            print(f"Error entering distrobox container: {str(e)}")
             raise
 
     def stop_container(self, container_name):
@@ -287,7 +306,7 @@ class ContainerManager:
         except Exception as e:
             print(f"Error listing distrobox containers: {str(e)}")
 
-    def remove_container(self, container_name):
+    def remove_container_docker(self, container_name):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
             container = self.client.containers.get(container_name)
@@ -298,6 +317,34 @@ class ContainerManager:
             print(f"Container {container_name.replace('_' + self.rosbox_suffix, '')} removed successfully")
         except Exception as e:
             print(f"Error removing container: {str(e)}")
+            raise
+
+    def remove_container_distrobox(self, container_name):
+        container_name = f"{container_name}_{self.rosbox_suffix}"
+        try:
+            # Check if distrobox is installed
+            result = subprocess.run(['which', 'distrobox'],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+            if result.returncode != 0:
+                print("Error: distrobox is not installed. Please install distrobox first!")
+                exit(1)
+
+            # Remove the distrobox container
+            result = subprocess.run(['distrobox', 'rm', container_name],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+
+            if result.returncode != 0:
+                print(f"Error removing distrobox container: {result.stderr}")
+                exit(1)
+            else:
+                print(f"Distrobox container {container_name.replace('_' + self.rosbox_suffix, '')} removed successfully")
+
+        except Exception as e:
+            print(f"Error removing distrobox container: {str(e)}")
             raise
 
     def build_image(self, image):
@@ -336,6 +383,7 @@ def main():
     if manager.config["container_manager"] == "distrobox":
         create_parser.add_argument('name', help='name of the rosbox')
         create_parser.add_argument('--ros_home', '-w', help='path to the container home', default=None)
+        create_parser.add_argument('--custom', '-c', help='Use a custom image (provide full image name)', action='store_true')
     else:
         create_parser.add_argument('name', help='name of the rosbox')
         create_parser.add_argument('--custom', '-c', help='Use a custom Docker image (provide full image name)', action='store_true')
@@ -392,18 +440,19 @@ def main():
                 exit(1)
             if args.custom:
                 image = args.image
-            elif args.build:
-                image = manager.select_default_image(args.image, False)
             else:
                 image = manager.select_default_image(args.image, True)
-            manager.create_container_distrobox(image, args.name, args.ros_ws,)
+            manager.create_container_distrobox(image, args.name, args.ros_home,)
     elif args.command == 'start':
         if manager.config["container_manager"] == "distrobox":
             print("command not supported for distrobox")
             exit(1)
         manager.start_container(args.name)
     elif args.command == 'enter':
-        manager.enter_container(args.name)
+        if manager.config["container_manager"] == "docker":
+            manager.enter_container_docker(args.name)
+        elif manager.config["container_manager"] == "distrobox":
+            manager.enter_container_distrobox(args.name)
     elif args.command == 'stop':
         if manager.config["container_manager"] == "distrobox":
             print("command not supported for distrobox")
@@ -415,7 +464,10 @@ def main():
         elif manager.config["container_manager"] == "distrobox":
             manager.list_containers_distrobox()
     elif args.command == 'remove':
-        manager.remove_container(args.name)
+        if manager.config["container_manager"] == "docker":
+            manager.remove_container_docker(args.name)
+        elif manager.config["container_manager"] == "distrobox":
+            manager.remove_container_distrobox(args.name)
     elif args.command == 'build':
         if manager.config["container_manager"] == "distrobox":
             print("for distrobox will not build the image just save a dockerfile")
