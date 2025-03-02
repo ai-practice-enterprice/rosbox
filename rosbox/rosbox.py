@@ -1,3 +1,4 @@
+from .config import load_config, save_config, update_config
 from .imageBuilder import InteractiveBuilder
 from .defaults import DEFAULT_IMAGES, DEFAULT_DOCKERHUB_IMAGES
 import docker
@@ -36,6 +37,7 @@ class ContainerManager:
     def __init__(self):
         self.client = docker.from_env()
         self.interactive_builder = InteractiveBuilder(self.dockerfile_path)
+        self.config = load_config()
 
     def pull_image(self, image):
         try:
@@ -82,8 +84,11 @@ class ContainerManager:
             print(f"Error: Image '{image}' not found in DEFAULT_IMAGES")
             exit(1)
 
+    def get_image_name_distrobox(self, image_name):
+        return DEFAULT_DOCKERHUB_IMAGES[image_name]
+
     # TODO add nvidia suport
-    def create_container(self, image_tag, container_name, ros_ws_path=None, auto_start=True, ssh_dir=False, host_net=True, gpu=False):
+    def create_container_docker(self, image_tag, container_name, ros_ws_path=None, auto_start=True, ssh_dir=False, host_net=True, gpu=False):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
             existing_container = self.client.containers.get(container_name)
@@ -114,8 +119,10 @@ class ContainerManager:
                         read_only=False
                     ))
                 # add X11 mount for GUI support on windows
-                mounts.append(Mount(target="/tmp/.X11-unix", source="/run/desktop/mnt/host/wslg/.X11-unix", type="bind"))
-                mounts.append(Mount(target="/dev", source="/dev", type="bind"))
+                if self.config["use_x11"]:
+                    mounts.append(Mount(target="/tmp/.X11-unix", source="/run/desktop/mnt/host/wslg/.X11-unix", type="bind"))
+                if self.config["mount_dev_dir"]:
+                    mounts.append(Mount(target="/dev", source="/dev", type="bind"))
                 container = self.client.containers.create(
                     image_tag, name=container_name,
                     hostname=container_name.replace('_' + self.rosbox_suffix, ''),
@@ -137,9 +144,11 @@ class ContainerManager:
                         propagation="rslave"
                     ))
                 # add X11 and Xauthority mounts for GUI support on linux
-                mounts.append(Mount(target="/tmp/.X11-unix", source="/tmp/.X11-unix", type="bind"))
-                mounts.append(Mount(target=os.environ.get('XAUTHORITY'), source=os.environ.get('XAUTHORITY'), type="bind", read_only=True))
-                mounts.append(Mount(target="/dev", source="/dev", type="bind"))
+                if self.config["use_x11"]:
+                    mounts.append(Mount(target="/tmp/.X11-unix", source="/tmp/.X11-unix", type="bind"))
+                    mounts.append(Mount(target=os.environ.get('XAUTHORITY'), source=os.environ.get('XAUTHORITY'), type="bind", read_only=True))
+                if self.config["use_dev"]:
+                    mounts.append(Mount(target="/dev", source="/dev", type="bind"))
                 # create container
                 container = self.client.containers.create(
                     image_tag, name=container_name,
@@ -164,6 +173,46 @@ class ContainerManager:
             print(f"Error creating container: {str(e)}")
             raise
 
+    def create_container_distrobox(self, image_tag, container_name, home_dir=None, gpu=False):
+        container_name = f"{container_name}_{self.rosbox_suffix}"
+        try:
+            # Check if distrobox is installed
+            result = subprocess.run(['which', 'distrobox'],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+            if result.returncode != 0:
+                print("Error: distrobox is not installed. Please install distrobox first!")
+                exit(1)
+
+            # Prepare command
+            cmd = ['distrobox', 'create', '-i', image_tag, '-n', container_name]
+
+            # Add home directory if specified
+            if home_dir:
+                cmd.extend(['--home', os.path.abspath(home_dir)])
+
+            # Add NVIDIA GPU support if requested
+            if gpu:
+                cmd.extend(['--nvidia'])
+                print("NVIDIA GPU support enabled")
+
+            # Create the distrobox container
+            result = subprocess.run(cmd,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+
+            if result.returncode != 0:
+                print(f"Error creating distrobox container: {result.stderr}")
+                exit(1)
+            else:
+                print(f"Distrobox container {container_name.replace('_' + self.rosbox_suffix, '')} created successfully")
+
+        except Exception as e:
+            print(f"Error creating distrobox container: {str(e)}")
+            raise
+
     def start_container(self, container_name):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
@@ -174,7 +223,7 @@ class ContainerManager:
             print(f"Error starting container: {str(e)}")
             raise
 
-    def enter_container(self, container_name):
+    def enter_container_docker(self, container_name):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
             container = self.client.containers.get(container_name)
@@ -187,6 +236,25 @@ class ContainerManager:
             print(f"Error entering container: {str(e)}")
             raise
 
+    def enter_container_distrobox(self, cotnaienr_name):
+        container_name = f"{cotnaienr_name}_{self.rosbox_suffix}"
+        try:
+            # Check if distrobox is installed
+            result = subprocess.run(['which', 'distrobox'],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+            if result.returncode != 0:
+                print("Error: distrobox is not installed. Please install distrobox first!")
+                exit(1)
+
+            # Enter the distrobox container
+            command = f"distrobox enter {container_name}"
+            subprocess.run(command, shell=True)
+        except Exception as e:
+            print(f"Error entering distrobox container: {str(e)}")
+            raise
+
     def stop_container(self, container_name):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
@@ -197,7 +265,7 @@ class ContainerManager:
             print(f"Error stopping container: {str(e)}")
             raise
 
-    def list_containers(self):
+    def list_containers_docker(self):
         containers = [c for c in self.client.containers.list(all=True, filters={"label": "type=rosbox"})]
         print(f"{'ID':<12} | {'NAME':<20} | {'STATUS':<20} | {'IMAGE':<20}")
         print("-" * 72)
@@ -206,7 +274,51 @@ class ContainerManager:
             print(f"{container.short_id:<12} | {name:<20} | {container.status:<20} | {container.image.tags[0]:<20}")
         print(("-" * 72) + "\n")
 
-    def remove_container(self, container_name):
+    def list_containers_distrobox(self):
+        try:
+            # Check if distrobox is installed
+            result = subprocess.run(['which', 'distrobox'],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+            if result.returncode != 0:
+                print("Error: distrobox is not installed. Please install distrobox first!")
+                return
+
+            # List all distrobox containers
+            result = subprocess.run(['distrobox', 'list'],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+
+            if result.returncode != 0:
+                print(f"Error listing distrobox containers: {result.stderr}")
+                return
+
+            # Filter only distrobox containers with _rosbox suffix
+            containers = []
+            lines = result.stdout.strip().split('\n')
+
+            # Skip header line
+            if len(lines) > 1:
+                header = lines[0]
+                print(header)
+                print("-" * len(header))
+
+                for line in lines[1:]:
+                    if f"_{self.rosbox_suffix}" in line:
+                        print(line)
+                        containers.append(line)
+
+                if not containers:
+                    print(f"No distrobox containers with _{self.rosbox_suffix} suffix found.")
+            else:
+                print("No distrobox containers found.")
+
+        except Exception as e:
+            print(f"Error listing distrobox containers: {str(e)}")
+
+    def remove_container_docker(self, container_name):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
             container = self.client.containers.get(container_name)
@@ -219,18 +331,48 @@ class ContainerManager:
             print(f"Error removing container: {str(e)}")
             raise
 
-    def build_image(self, image):
+    def remove_container_distrobox(self, container_name):
+        container_name = f"{container_name}_{self.rosbox_suffix}"
+        try:
+            # Check if distrobox is installed
+            result = subprocess.run(['which', 'distrobox'],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+            if result.returncode != 0:
+                print("Error: distrobox is not installed. Please install distrobox first!")
+                exit(1)
+
+            # Remove the distrobox container
+            result = subprocess.run(['distrobox', 'rm', container_name],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  encoding='utf-8')
+
+            if result.returncode != 0:
+                print(f"Error removing distrobox container: {result.stderr}")
+                exit(1)
+            else:
+                print(f"Distrobox container {container_name.replace('_' + self.rosbox_suffix, '')} removed successfully")
+
+        except Exception as e:
+            print(f"Error removing distrobox container: {str(e)}")
+            raise
+
+    def build_image(self, image, no_build = False):
         if image not in DEFAULT_IMAGES:
             print(f"Error: Image '{image}' not found in DEFAULT_IMAGES")
             exit(1)
         image_name = DEFAULT_IMAGES[image]["image-name"]
-        print(f"Building image {image_name}...")
+        print(f"Generating Dockerfile for image {image_name}...")
         base_template = DEFAULT_IMAGES[image]["base"]
         ros_template = DEFAULT_IMAGES[image]["ros"]
         enteryPoint_template = DEFAULT_IMAGES[image]["entrypoint"]
         default_template = DEFAULT_IMAGES[image]["default"]
         self.interactive_builder.generator.generate_dockerfile(base_template, ros_template, enteryPoint_template, self.interactive_builder.dockerfile_path, default_template)
-        self.interactive_builder.image_builder.build_image(image_name)
+        if not no_build:
+            print(f"Building image {image_name}...")
+            self.interactive_builder.image_builder.build_image(image_name)
 
     def build_image_it(self, image_name, no_build):
         self.interactive_builder.generate_dockerfile(entryPoint = 'rosbox')
@@ -252,13 +394,19 @@ def main():
         help='If no flags: default images {' + ', '.join(DEFAULT_IMAGES.keys()) + '}. ' +
              'If --custom: full Docker image name. ' +
              'If --build: name default images to build locally')
-    create_parser.add_argument('name', help='name of the rosbox')
-    create_parser.add_argument('--custom', '-c', help='Use a custom Docker image (provide full image name)', action='store_true')
-    create_parser.add_argument('--build', '-b', help='Use locally built default image instead of prebuilt one', action='store_true')
-    create_parser.add_argument('--ros_ws', '-w', help='path to the ROS workspace', default=None)
-    create_parser.add_argument('--no_start', help='disable container autostart wen created', action='store_true')
-    create_parser.add_argument('--ssh_keys', '-s', help='mount the ssh dir from host to container', action='store_true')
-    create_parser.add_argument('--no_host_net', help='do not use the host network', action='store_true')
+    if manager.config["container_manager"] == "distrobox":
+        create_parser.add_argument('name', help='name of the rosbox')
+        create_parser.add_argument('--ros_home', '-w', help='path to the container home', default=None)
+        create_parser.add_argument('--custom', '-c', help='Use a custom image (provide full image name)', action='store_true')
+        create_parser.add_argument('--gpu', help='Enable NVIDIA GPU support', action='store_true')
+    else:
+        create_parser.add_argument('name', help='name of the rosbox')
+        create_parser.add_argument('--custom', '-c', help='Use a custom Docker image (provide full image name)', action='store_true')
+        create_parser.add_argument('--build', '-b', help='Use locally built default image instead of prebuilt one', action='store_true')
+        create_parser.add_argument('--ros_ws', '-w', help='path to the ROS workspace', default=None)
+        create_parser.add_argument('--no_start', help='disable container autostart wen created', action='store_true')
+        create_parser.add_argument('--ssh_keys', '-s', help='mount the ssh dir from host to container', action='store_true')
+        create_parser.add_argument('--no_host_net', help='do not use the host network', action='store_true')
     # TODO add nvidia suport
     # create_parser.add_argument('--gpu', help='use nvidia runtime', action='store_true')
 
@@ -293,27 +441,61 @@ def main():
     args = parser.parse_args()
 
     if args.command == 'create':
-        if args.custom:
-            image = args.image
-        elif args.build:
-            image = manager.select_default_image(args.image, False)
-        else:
-            image = manager.select_default_image(args.image, True)
-        manager.create_container(image, args.name, args.ros_ws, not args.no_start, args.ssh_keys, not args.no_host_net)
+        if manager.config["container_manager"] == "docker":
+            if args.custom:
+                image = args.image
+            elif args.build:
+                image = manager.select_default_image(args.image, False)
+            else:
+                image = manager.select_default_image(args.image, True)
+            manager.create_container_docker(image, args.name, args.ros_ws, not args.no_start, args.ssh_keys, not args.no_host_net)
+        elif manager.config["container_manager"] == "distrobox":
+            if check_os() != "linux":
+                print("Distrobox is only supported on Linux")
+                exit(1)
+            if args.custom:
+                image = args.image
+            else:
+                image = manager.get_image_name_distrobox(args.image)
+            print(f"Selected image: {image}")
+            manager.create_container_distrobox(image, args.name, args.ros_home, args.gpu)
     elif args.command == 'start':
+        if manager.config["container_manager"] == "distrobox":
+            print("command not supported for distrobox")
+            exit(1)
         manager.start_container(args.name)
     elif args.command == 'enter':
-        manager.enter_container(args.name)
+        if manager.config["container_manager"] == "docker":
+            manager.enter_container_docker(args.name)
+        elif manager.config["container_manager"] == "distrobox":
+            manager.enter_container_distrobox(args.name)
     elif args.command == 'stop':
+        if manager.config["container_manager"] == "distrobox":
+            print("command not supported for distrobox")
+            exit(1)
         manager.stop_container(args.name)
     elif args.command == 'list':
-        manager.list_containers()
+        if manager.config["container_manager"] == "docker":
+            manager.list_containers_docker()
+        elif manager.config["container_manager"] == "distrobox":
+            manager.list_containers_distrobox()
     elif args.command == 'remove':
-        manager.remove_container(args.name)
+        if manager.config["container_manager"] == "docker":
+            manager.remove_container_docker(args.name)
+        elif manager.config["container_manager"] == "distrobox":
+            manager.remove_container_distrobox(args.name)
     elif args.command == 'build':
-        manager.build_image(args.image)
+        if manager.config["container_manager"] == "distrobox":
+            print("for distrobox will not build the image just save a dockerfile")
+            manager.build_image(args.image, True)
+        else:
+            manager.build_image(args.image)
     elif args.command == 'ibuilder':
-        manager.build_image_it(args.name, args.no_build)
+        if manager.config["container_manager"] == "distrobox":
+            print("for distrobox will not build the image just save a dockerfile")
+            manager.build_image_it(args.name, True)
+        else:
+            manager.build_image_it(args.name, args.no_build)
     else:
         parser.print_help()
 
