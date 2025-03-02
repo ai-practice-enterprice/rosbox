@@ -168,7 +168,6 @@ class ContainerManager:
 
     def create_container_distrobox(self, image_tag, container_name, home_dir=None):
         container_name = f"{container_name}_{self.rosbox_suffix}"
-        print(f"Creating container {container_name} with image {image_tag}")
         try:
             # Check if distrobox is installed
             result = subprocess.run(['which', 'distrobox'],
@@ -290,13 +289,17 @@ def main():
         help='If no flags: default images {' + ', '.join(DEFAULT_IMAGES.keys()) + '}. ' +
              'If --custom: full Docker image name. ' +
              'If --build: name default images to build locally')
-    create_parser.add_argument('name', help='name of the rosbox')
-    create_parser.add_argument('--custom', '-c', help='Use a custom Docker image (provide full image name)', action='store_true')
-    create_parser.add_argument('--build', '-b', help='Use locally built default image instead of prebuilt one', action='store_true')
-    create_parser.add_argument('--ros_ws', '-w', help='path to the ROS workspace', default=None)
-    create_parser.add_argument('--no_start', help='disable container autostart wen created', action='store_true')
-    create_parser.add_argument('--ssh_keys', '-s', help='mount the ssh dir from host to container', action='store_true')
-    create_parser.add_argument('--no_host_net', help='do not use the host network', action='store_true')
+    if manager.config["container_manager"] == "distrobox":
+        create_parser.add_argument('name', help='name of the rosbox')
+        create_parser.add_argument('--ros_home', '-w', help='path to the container home', default=None)
+    else:
+        create_parser.add_argument('name', help='name of the rosbox')
+        create_parser.add_argument('--custom', '-c', help='Use a custom Docker image (provide full image name)', action='store_true')
+        create_parser.add_argument('--build', '-b', help='Use locally built default image instead of prebuilt one', action='store_true')
+        create_parser.add_argument('--ros_ws', '-w', help='path to the ROS workspace', default=None)
+        create_parser.add_argument('--no_start', help='disable container autostart wen created', action='store_true')
+        create_parser.add_argument('--ssh_keys', '-s', help='mount the ssh dir from host to container', action='store_true')
+        create_parser.add_argument('--no_host_net', help='do not use the host network', action='store_true')
     # TODO add nvidia suport
     # create_parser.add_argument('--gpu', help='use nvidia runtime', action='store_true')
 
@@ -340,13 +343,15 @@ def main():
                 image = manager.select_default_image(args.image, True)
             manager.create_container_docker(image, args.name, args.ros_ws, not args.no_start, args.ssh_keys, not args.no_host_net)
         elif manager.config["container_manager"] == "distrobox":
+            if check_os() != "linux":
+                print("Distrobox is only supported on Linux")
+                exit(1)
             if args.custom:
                 image = args.image
             elif args.build:
                 image = manager.select_default_image(args.image, False)
             else:
                 image = manager.select_default_image(args.image, True)
-            print(f"Creating container {args.name} with image {image}")
             manager.create_container_distrobox(image, args.name, args.ros_ws,)
     elif args.command == 'start':
         manager.start_container(args.name)
