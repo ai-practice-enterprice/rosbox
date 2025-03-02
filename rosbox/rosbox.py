@@ -350,18 +350,20 @@ class ContainerManager:
             print(f"Error removing distrobox container: {str(e)}")
             raise
 
-    def build_image(self, image):
+    def build_image(self, image, no_build = False):
         if image not in DEFAULT_IMAGES:
             print(f"Error: Image '{image}' not found in DEFAULT_IMAGES")
             exit(1)
         image_name = DEFAULT_IMAGES[image]["image-name"]
-        print(f"Building image {image_name}...")
+        print(f"Generating Dockerfile for image {image_name}...")
         base_template = DEFAULT_IMAGES[image]["base"]
         ros_template = DEFAULT_IMAGES[image]["ros"]
         enteryPoint_template = DEFAULT_IMAGES[image]["entrypoint"]
         default_template = DEFAULT_IMAGES[image]["default"]
         self.interactive_builder.generator.generate_dockerfile(base_template, ros_template, enteryPoint_template, self.interactive_builder.dockerfile_path, default_template)
-        self.interactive_builder.image_builder.build_image(image_name)
+        if not no_build:
+            print(f"Building image {image_name}...")
+            self.interactive_builder.image_builder.build_image(image_name)
 
     def build_image_it(self, image_name, no_build):
         self.interactive_builder.generate_dockerfile(entryPoint = 'rosbox')
@@ -475,7 +477,7 @@ def main():
     elif args.command == 'build':
         if manager.config["container_manager"] == "distrobox":
             print("for distrobox will not build the image just save a dockerfile")
-            manager.build_image(args.image)
+            manager.build_image(args.image, True)
         else:
             manager.build_image(args.image)
     elif args.command == 'ibuilder':
