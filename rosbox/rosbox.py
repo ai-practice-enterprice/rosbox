@@ -119,8 +119,10 @@ class ContainerManager:
                         read_only=False
                     ))
                 # add X11 mount for GUI support on windows
-                mounts.append(Mount(target="/tmp/.X11-unix", source="/run/desktop/mnt/host/wslg/.X11-unix", type="bind"))
-                mounts.append(Mount(target="/dev", source="/dev", type="bind"))
+                if self.config["use_x11"]:
+                    mounts.append(Mount(target="/tmp/.X11-unix", source="/run/desktop/mnt/host/wslg/.X11-unix", type="bind"))
+                if self.config["mount_dev_dir"]:
+                    mounts.append(Mount(target="/dev", source="/dev", type="bind"))
                 container = self.client.containers.create(
                     image_tag, name=container_name,
                     hostname=container_name.replace('_' + self.rosbox_suffix, ''),
@@ -142,9 +144,11 @@ class ContainerManager:
                         propagation="rslave"
                     ))
                 # add X11 and Xauthority mounts for GUI support on linux
-                mounts.append(Mount(target="/tmp/.X11-unix", source="/tmp/.X11-unix", type="bind"))
-                mounts.append(Mount(target=os.environ.get('XAUTHORITY'), source=os.environ.get('XAUTHORITY'), type="bind", read_only=True))
-                mounts.append(Mount(target="/dev", source="/dev", type="bind"))
+                if self.config["use_x11"]:
+                    mounts.append(Mount(target="/tmp/.X11-unix", source="/tmp/.X11-unix", type="bind"))
+                    mounts.append(Mount(target=os.environ.get('XAUTHORITY'), source=os.environ.get('XAUTHORITY'), type="bind", read_only=True))
+                if self.config["use_dev"]:
+                    mounts.append(Mount(target="/dev", source="/dev", type="bind"))
                 # create container
                 container = self.client.containers.create(
                     image_tag, name=container_name,
