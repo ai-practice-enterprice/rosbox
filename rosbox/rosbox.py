@@ -398,10 +398,16 @@ def main():
                 image = manager.select_default_image(args.image, True)
             manager.create_container_distrobox(image, args.name, args.ros_ws,)
     elif args.command == 'start':
+        if manager.config["container_manager"] == "distrobox":
+            print("command not supported for distrobox")
+            exit(1)
         manager.start_container(args.name)
     elif args.command == 'enter':
         manager.enter_container(args.name)
     elif args.command == 'stop':
+        if manager.config["container_manager"] == "distrobox":
+            print("command not supported for distrobox")
+            exit(1)
         manager.stop_container(args.name)
     elif args.command == 'list':
         if manager.config["container_manager"] == "docker":
@@ -411,9 +417,17 @@ def main():
     elif args.command == 'remove':
         manager.remove_container(args.name)
     elif args.command == 'build':
-        manager.build_image(args.image)
+        if manager.config["container_manager"] == "distrobox":
+            print("for distrobox will not build the image just save a dockerfile")
+            manager.build_image(args.image)
+        else:
+            manager.build_image(args.image)
     elif args.command == 'ibuilder':
-        manager.build_image_it(args.name, args.no_build)
+        if manager.config["container_manager"] == "distrobox":
+            print("for distrobox will not build the image just save a dockerfile")
+            manager.build_image_it(args.name, True)
+        else:
+            manager.build_image_it(args.name, args.no_build)
     else:
         parser.print_help()
 
