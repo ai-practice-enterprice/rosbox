@@ -84,6 +84,9 @@ class ContainerManager:
             print(f"Error: Image '{image}' not found in DEFAULT_IMAGES")
             exit(1)
 
+    def get_image_name_distrobox(self, image_name):
+        return DEFAULT_DOCKERHUB_IMAGES[image_name]
+
     # TODO add nvidia suport
     def create_container_docker(self, image_tag, container_name, ros_ws_path=None, auto_start=True, ssh_dir=False, host_net=True, gpu=False):
         container_name = f"{container_name}_{self.rosbox_suffix}"
@@ -441,7 +444,8 @@ def main():
             if args.custom:
                 image = args.image
             else:
-                image = manager.select_default_image(args.image, True)
+                image = manager.get_image_name_distrobox(args.image)
+            print(f"Selected image: {image}")
             manager.create_container_distrobox(image, args.name, args.ros_home,)
     elif args.command == 'start':
         if manager.config["container_manager"] == "distrobox":
