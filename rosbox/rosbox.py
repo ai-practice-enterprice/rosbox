@@ -169,7 +169,7 @@ class ContainerManager:
             print(f"Error creating container: {str(e)}")
             raise
 
-    def create_container_distrobox(self, image_tag, container_name, home_dir=None):
+    def create_container_distrobox(self, image_tag, container_name, home_dir=None, gpu=False):
         container_name = f"{container_name}_{self.rosbox_suffix}"
         try:
             # Check if distrobox is installed
@@ -187,6 +187,11 @@ class ContainerManager:
             # Add home directory if specified
             if home_dir:
                 cmd.extend(['--home', os.path.abspath(home_dir)])
+
+            # Add NVIDIA GPU support if requested
+            if gpu:
+                cmd.extend(['--nvidia'])
+                print("NVIDIA GPU support enabled")
 
             # Create the distrobox container
             result = subprocess.run(cmd,
@@ -389,6 +394,7 @@ def main():
         create_parser.add_argument('name', help='name of the rosbox')
         create_parser.add_argument('--ros_home', '-w', help='path to the container home', default=None)
         create_parser.add_argument('--custom', '-c', help='Use a custom image (provide full image name)', action='store_true')
+        create_parser.add_argument('--gpu', help='Enable NVIDIA GPU support', action='store_true')
     else:
         create_parser.add_argument('name', help='name of the rosbox')
         create_parser.add_argument('--custom', '-c', help='Use a custom Docker image (provide full image name)', action='store_true')
@@ -448,7 +454,7 @@ def main():
             else:
                 image = manager.get_image_name_distrobox(args.image)
             print(f"Selected image: {image}")
-            manager.create_container_distrobox(image, args.name, args.ros_home,)
+            manager.create_container_distrobox(image, args.name, args.ros_home, args.gpu)
     elif args.command == 'start':
         if manager.config["container_manager"] == "distrobox":
             print("command not supported for distrobox")
