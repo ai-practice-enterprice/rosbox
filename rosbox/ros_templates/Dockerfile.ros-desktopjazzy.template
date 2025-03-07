@@ -24,4 +24,4 @@ RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/r
 RUN apt-get update \
     && apt-get install -y ros-dev-tools \
     && apt-get upgrade -y \
-    && apt-get install -y ros-humble-desktop
+    && apt-get install -y ros-jazzy-desktop
