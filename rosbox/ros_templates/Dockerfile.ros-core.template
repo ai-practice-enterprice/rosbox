@@ -1,7 +1,7 @@
 # Update base system
 RUN apt-get update && apt-get upgrade -y
 
-ENV ROS_DISTRO=jazzy
+ENV ROS_DISTRO=humble
 
 # Set locale
 RUN apt-get install -y locales \
