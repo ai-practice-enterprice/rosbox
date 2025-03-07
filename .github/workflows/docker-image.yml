@@ -53,3 +53,9 @@ jobs:
           rosbox build desktop
           docker tag rosbox-desktop sterren642/rosbox:desktop-latest
           docker push sterren642/rosbox:desktop-latest
+
+      - name: Build and push desktop image
+        run: |
+          rosbox build desktopjazzy
+          docker tag rosbox-desktopjazzy sterren642/rosbox:desktopjazzy-latest
+          docker push sterren642/rosbox:desktopjazzy-latest
