@@ -1,9 +1,9 @@
 RUN apt-get update
 # install ros2 control pkg
-RUN apt-get install -y ros-${ROS_DISTRO}-ros2-control ros-${ROS_DISTRO}-ros2-controllers
+RUN apt-get install -y ros-humble-ros2-control ros-humble-ros2-controllers
 # install simulation pkg
-RUN apt-get install -y ros-${ROS_DISTRO}-ros-gz
-RUN apt-get install -y ros-${ROS_DISTRO}-gz-ros2-control
+RUN apt-get install -y ros-humble-ros-gz
+RUN apt-get install -y ros-humble-gz-ros2-control
 
 # install vscode
 RUN sudo apt-get -y install wget gpg
