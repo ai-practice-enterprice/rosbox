@@ -1,6 +1,6 @@
 DEFAULT_IMAGES = {
     "desktop": {"base":"universal", "ros":"ros-desktop", "entrypoint":"rosbox", "image-name":"rosbox-desktop", "default":"desktop"},
-    "desktopjazzy": {"base":"universaljazzy", "ros":"ros-desktopjazzy", "entrypoint":"rosbox", "image-name":"rosbox-desktopjazzy", "default":"desktopjazzy"},
+    "desktopjazzy": {"base":"universaljazzy", "ros":"ros-desktopjazzy", "entrypoint":"rosboxjazzy", "image-name":"rosbox-desktopjazzy", "default":"desktopjazzy"},
     "robot-jetracer": {"base":"universal", "ros":"ros-base", "entrypoint":"rosbox", "image-name":"rosbox-robot-jetracer", "default":"robot-jetracer"},
     "robot-jetank": {"base":"universal", "ros":"ros-base", "entrypoint":"rosbox", "image-name":"rosbox-robot-jetank", "default":"robot-jetank"},
     "sim": {"base":"universal", "ros":"ros-simulation", "entrypoint":"rosbox", "image-name":"rosbox-sim", "default":"sim"}
