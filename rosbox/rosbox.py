@@ -124,7 +124,8 @@ class ContainerManager:
                     labels={"type": "rosbox"},
                     network_mode="host" if host_net else "bridge",
                     environment=["DISPLAY=:0"],
-                    privileged = True
+                    privileged = True,
+                    entrypoint=["sh", "-c", "sleep infinity"]
                 )
             elif check_os() == 'linux': # for running on linux
                 # add ros_ws mount for ROS workspace
@@ -149,7 +150,8 @@ class ContainerManager:
                     labels={"type": "rosbox"},
                     network_mode="host" if host_net else "bridge",
                     environment=["DISPLAY=:0", "XAUTHORITY=" + str(os.environ.get('XAUTHORITY'))],
-                    privileged=True
+                    privileged=True,
+                    entrypoint=["sh", "-c", "sleep infinity"]
                 )
             else:
                 print("Error: Unsupported OS")
