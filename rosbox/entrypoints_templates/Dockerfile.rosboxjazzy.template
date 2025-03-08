@@ -7,4 +7,9 @@ WORKDIR /home/ubuntu/ros_ws
 
 RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /home/ubuntu/.bashrc
 
-CMD ["bash"]
+RUN echo '#!/bin/bash' > /home/ubuntu/ros-entrypoint.sh && \
+    echo 'source /opt/ros/$ROS_DISTRO/setup.bash' >> /home/ubuntu/ros-entrypoint.sh && \
+    echo 'exec "$@"' >> /home/ubuntu/ros-entrypoint.sh && \
+    chmod +x /home/ubuntu/ros-entrypoint.sh
+
+ENTRYPOINT ["/home/ubuntu/ros-entrypoint.sh"]
