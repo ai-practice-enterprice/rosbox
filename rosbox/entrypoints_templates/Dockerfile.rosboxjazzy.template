@@ -1,4 +1,3 @@
-RUN useradd -m -s /bin/bash ubuntu
 RUN echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 USER ubuntu
@@ -8,4 +7,4 @@ WORKDIR /home/ubuntu/ros_ws
 
 RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /home/ubuntu/.bashrc
 
-ENTRYPOINT ["bash"]
+ENTRYPOINT ["sleep", "infinity"]

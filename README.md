@@ -114,30 +114,122 @@ This is a basic example demonstrating rosbox commands:
     - `name`: The name assigned to the image being built.
     - `-h`: Displays help information for this command.
 
+## Configuration
+
+rosbox uses a configuration file to store user preferences and settings. The configuration file is automatically created with default values when you first run rosbox.
+
+### Configuration File Location
+- Windows: `C:\Users\<username>\AppData\Roaming\rosbox\config.json`
+- Linux: `~/.config/rosbox/config.json`
+
+### Default Configuration
+```python
+DEFAULT_CONFIG = {
+    "container_manager": "docker",
+    "use_x11": True,
+    "mount_dev_dir": True
+}
+```
+
+### Configuration Options
+
+- **container_manager**: Specifies which container technology to use
+  - `docker`: Uses Docker for container management (default)
+  - `distrobox`: Uses Distrobox, which provides a more seamless integration with the host system
+
+- **use_x11**: Controls X11 window forwarding for GUI applications
+  - `True`: Enables X11 forwarding, allowing GUI applications in the container to display on the host (default)
+  - `False`: Disables X11 forwarding, suitable for headless setups or when GUI applications are not needed
+
+- **mount_dev_dir**: Controls whether to mount the host's /dev directory
+  - `True`: Mounts the host's /dev directory, providing access to hardware devices like sensors and cameras (default)
+  - `False`: Does not mount the /dev directory, providing better isolation but limited hardware access
+
+You can modify these settings by directly editing the configuration file or using the rosbox API programmatically.
+
 ## image templates
-### default
-- base: ubuntu:20.04
-- ros: ros-desktop
+rosbox comes with several pre-built image templates:
 
-### base templates
-- universal: ubuntu:20.04
-- toolbox: for distrobox not for rosbox
-- (in progress) nvidia: nvidia/cuda:11.4.1-cudnn8-devel-ubuntu20.04
+### Available Image Templates
 
-### ros templates
-- core: ros-core
-> minimal Installation with essential ROS 2 communication packages (publish/subscribe,services,etc...) \
-> does **not** include visualisation tools or other add-ons
-- base: ros-base (extends the `ROS Core`)
-> adds some additional CLI tools and basic packages \
-> such as the **robot_state_publisher** or **URDF** which will be required when combining `ROS` and `Gazebo`
-- desktop: ros-desktop (extends `ROS Base`)
-> adds visualisation tools such as **Rviz** (to vizualize URDF files)
-- desktop-full: ros-desktop-full (extends `Desktop`)
-> adds the `Perception` and `Simulation` packages and `Gazebo` simulation demos
-- perception: ros-perception (extends `ROS Base`)
-> adds other packages like **vision_opencv** or **laser_geometry** \
-> (libraries for working with sensors,computer vision,etc...)
-- simulation: ros-simulation (extends `ROS Base`)
-> adds other packages like **ros_gz_bridge** or **ros_gz_sim** \
-> which are `Gazebo` plugins for `ROS`
+- **desktop**: A comprehensive development environment that includes:
+  - Full ROS desktop installation with all core packages
+  - Development tools and libraries
+  - Simulation tools (Gazebo, RViz, etc.)
+  - GUI support for visualization and debugging
+
+- **robot-jetracer**: Replicates the NVIDIA JetRacer platform environment:
+  - ROS base installation
+  - JetRacer-specific ros libraries
+  - Provides exact software configuration as the physical robot for consistent development
+
+- **robot-jetank**: Mirrors the NVIDIA JetBot/JetTank platform environment:
+  - ROS base installation
+  - JetBot-specific ros libraries
+  - Provides exact software configuration as the physical robot for consistent development
+
+- **sim**: Focused on simulation capabilities:
+  - ROS base installation
+  - Full simulation stack (Gazebo, RViz)
+  - Simplified environment for running simulations
+
+You can select these templates when creating a new rosbox or building a custom image.
+
+## Distrobox Support
+
+RosBox offers native support for Distrobox, an alternative container management system that provides more seamless integration with the host Linux system compared to Docker.
+
+### What is Distrobox?
+
+Distrobox is a tool that allows you to use any Linux distribution inside your terminal. It uses containers to create isolated environments while integrating deeply with the host system, providing a more native experience than traditional Docker containers.
+
+### Benefits of Using Distrobox with RosBox
+
+- **Seamless integration**: Access host system resources more naturally
+- **Better hardware support**: Easier access to devices and peripherals
+- **Common home directory**: Share files between host and container more easily
+- **Simplified permissions**: Avoid common Docker permission issues
+
+### Using RosBox with Distrobox
+
+To enable Distrobox support, edit your RosBox configuration file and set:
+
+```json
+{
+  "container_manager": "distrobox"
+}
+```
+
+### Command Differences for Distrobox Mode
+
+When using Distrobox mode, some commands have different options:
+
+- **Create a container:**
+  ```bash
+  rosbox create <image> <name> [--custom] [--ros_home <path>] [--gpu]
+  ```
+  - `--ros_home`: Specify the container home path (instead of `--ros_ws` in Docker mode)
+  - `--gpu`: Enable NVIDIA GPU support
+  - Note: `--build`, `--no_start`, `--ssh_keys`, and `--no_host_net` are not available in Distrobox mode
+
+### Limitations
+
+- Distrobox support is only available on Linux hosts
+- Some commands like `start` and `stop` are not supported since Distrobox containers behave differently
+- Building custom images works differently - RosBox will generate a Dockerfile but not build the image directly
+
+### Example Usage
+
+```bash
+# Create a ROS2 desktop container using Distrobox
+rosbox create desktop ros2_distro --ros_home /path/to/home --gpu
+
+# Enter the container
+rosbox enter ros2_distro
+
+# List all distrobox containers
+rosbox list
+
+# Remove a container
+rosbox remove ros2_distro
+```

@@ -62,7 +62,8 @@ class DockerfileGenerator:
     def generate_dockerfile(self, base_template, ros_template, entrypoint_template, output_file, default_template = None):
         ros_template = self.ros_templates[ros_template]
         base_template = self.base_templates[base_template]
-        default_template = self.default_templates[default_template]
+        if default_template != None:
+            default_template = self.default_templates[default_template]
         entrypoint_template = self.entrypoints_templates[entrypoint_template]
 
         # Read the ROS install Dockerfile template from its file
@@ -144,29 +145,18 @@ class InteractiveBuilder:
         self.selected_entrypoint, _ = pick(options, title)
 
     def generate_dockerfile(self, base = None, ros = None, entryPoint = None):
-        options = ["default", "custom"]
-        title = "Choose a generation method:"
-        selected_option, _ = pick(options, title)
-        if selected_option == "custom":
-            if base == None:
-                self.select_base_template()
-            else:
-                self.selected_base = base
-            if ros == None:
-                self.select_ros_template()
-            else:
-                self.selected_ros = ros
-            if entryPoint == None:
-                self.select_entrypoint_template()
-            else:
-                self.selected_entrypoint = entryPoint
+        if base == None:
+            self.select_base_template()
         else:
-            if base != None:
-                self.selected_base = base
-            if ros != None:
-                self.selected_ros = ros
-            if entryPoint != None:
-                self.selected_entrypoint = entryPoint
+            self.selected_base = base
+        if ros == None:
+            self.select_ros_template()
+        else:
+            self.selected_ros = ros
+        if entryPoint == None:
+            self.select_entrypoint_template()
+        else:
+            self.selected_entrypoint = entryPoint
 
         self.generator.generate_dockerfile(
             self.selected_base,
