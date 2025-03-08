@@ -7,4 +7,4 @@ WORKDIR /home/ubuntu/ros_ws
 
 RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /home/ubuntu/.bashrc
 
-ENTRYPOINT ["bash"]
+CMD ["bash"]
