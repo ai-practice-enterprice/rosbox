@@ -1,8 +1,15 @@
 RUN apt-get update
-RUN apt-get install -y ros-${ROS_DISTRO}-ros-gz
+RUN apt-get install -y ros-${ROS_DISTRO}-gazebo-ros-pkgs
 RUN apt-get install -y ros-${ROS_DISTRO}-ros2-control ros-${ROS_DISTRO}-ros2-controllers
-RUN if [ "$ROS_DISTRO" = "humble" ]; then \
-    apt-get install -y ros-humble-ign-ros2-control; \
-  else \
-    apt-get install -y ros-${ROS_DISTRO}-gz-ros2-control; \
-  fi
+RUN apt-get install -y ros-${ROS_DISTRO}-gazebo-ros2-control
+
+
+# install vscode
+RUN sudo apt-get -y install wget gpg
+RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+RUN sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+RUN echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" |sudo tee /etc/apt/sources.list.d/vscode.list > /dev/null
+RUN rm -f packages.microsoft.gpg
+RUN sudo apt install -y apt-transport-https
+RUN sudo apt update
+RUN sudo apt install -y code
