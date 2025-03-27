@@ -51,10 +51,13 @@ RUN apt-get update && apt-get install -y \
 	xz-utils \
 	zip \
 	nano \
-	vim
+	vim \
+	git
 
 {{ ros_install }}
 
 {{ default }}
+
+RUN rm -rf /var/lib/apt/lists/*
 
 {{ entrypoint_setup }}
