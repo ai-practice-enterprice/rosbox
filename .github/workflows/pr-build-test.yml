@@ -1,0 +1,37 @@
+name: PR Build and Test
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Install Python CLI tool
+        run: pip install .
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build robot-jetracer image
+        run: rosbox build robot-jetracer
+
+      - name: Build robot-jetank image
+        run: rosbox build robot-jetank
+
+      - name: Build sim image
+        run: rosbox build sim
+
+      - name: Build desktop image
+        run: rosbox build desktop
