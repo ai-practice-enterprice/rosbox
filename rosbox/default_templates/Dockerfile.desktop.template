@@ -8,6 +8,7 @@ RUN if [ "$ROS_DISTRO" = "humble" ]; then \
   else \
     apt-get install -y ros-${ROS_DISTRO}-gz-ros2-control; \
   fi
+RUN apt-get install -y ros-${ROS_DISTRO}-twist-mux
 
 # install vscode
 RUN sudo apt-get -y install wget gpg
