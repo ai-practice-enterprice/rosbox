@@ -2,6 +2,7 @@ RUN apt-get update
 RUN apt-get install -y ros-${ROS_DISTRO}-gazebo-ros-pkgs
 RUN apt-get install -y ros-${ROS_DISTRO}-ros2-control ros-${ROS_DISTRO}-ros2-controllers
 RUN apt-get install -y ros-${ROS_DISTRO}-gazebo-ros2-control
+RUN apt-get install -y ros-${ROS_DISTRO}-twist-mux
 
 
 # install vscode
