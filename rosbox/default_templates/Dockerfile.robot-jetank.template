@@ -1,2 +1,2 @@
 RUN apt-get update
-RUN apt-get install -y ros-${ROS_DISTRO}-ros2-control ros-${ROS_DISTRO}-ros2-controllers
+RUN apt-get install -y ros-${ROS_DISTRO}-teleop-twist-joy

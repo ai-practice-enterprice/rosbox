@@ -434,6 +434,7 @@ def main():
     # Create parser for "build" command
     build_parser = subparsers.add_parser('build', help='build a default image')
     build_parser.add_argument('image', help='default image choose from {' + ', '.join(DEFAULT_IMAGES.keys()) + '}')
+    build_parser.add_argument('--no_build', help='do not build the image but only generate the Dockerfile', action='store_true')
 
     # Create parser for "ibuilder" command
     ibuilder_parser = subparsers.add_parser('ibuilder', help='Build docker image using a interactive interface to select the templates')
@@ -491,7 +492,7 @@ def main():
             print("for distrobox will not build the image just save a dockerfile")
             manager.build_image(args.image, True)
         else:
-            manager.build_image(args.image)
+            manager.build_image(args.image, args.no_build)
     elif args.command == 'ibuilder':
         if manager.config["container_manager"] == "distrobox":
             print("for distrobox will not build the image just save a dockerfile")
