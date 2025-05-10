@@ -1,5 +1,5 @@
 # Update base system
-RUN apt-get update && apt-get upgrade -y
+RUN apt-get update
 
 ENV ROS_DISTRO=humble
 
@@ -22,5 +22,4 @@ RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/r
 # Install development tools (optional) and ROS 2
 RUN apt-get update \
     && apt-get install -y ros-dev-tools \
-    && apt-get upgrade -y \
     && apt-get install -y ros-humble-desktop-full

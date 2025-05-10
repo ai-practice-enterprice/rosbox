@@ -47,6 +47,14 @@ This is a basic example demonstrating rosbox commands:
    rosbox remove ros2
    ```
 
+5. (Only for desktop version): run the zenoh-bridge-ros2dds client to the router in new terminal:
+    - Keep the terminal open as long as you want to keep the bridge running.
+    - Use ctrl+C to stop the bridge.
+
+    ```bash
+    zenoh-bridge-ros2dds -e tcp/<server-ip>:7447
+    ```
+
 ## Usage
 - Create a new rosbox container:
   ```bash
